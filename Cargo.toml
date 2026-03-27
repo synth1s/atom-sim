@@ -1,0 +1,17 @@
+[package]
+name = "atom-sim"
+version = "0.1.0"
+edition = "2024"
+description = "A 2D atomic simulation evolving through the history of atomic models"
+license = "MIT"
+
+[dependencies]
+bevy = "0.18"
+rand = "0.9"
+
+# Fast compilation in dev
+[profile.dev]
+opt-level = 1
+
+[profile.dev.package."*"]
+opt-level = 3
