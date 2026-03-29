@@ -6,6 +6,7 @@ use bevy::prelude::*;
 use common::{ActiveEra, CameraPlugin, SimulationState};
 use eras::democritus::DemocritusPlugin;
 use eras::dalton::DaltonPlugin;
+use eras::thomson::ThomsonPlugin;
 
 fn main() {
     App::new()
@@ -22,5 +23,6 @@ fn main() {
         .add_plugins(CameraPlugin)
         .add_plugins(DemocritusPlugin)
         .add_plugins(DaltonPlugin)
+        .add_plugins(ThomsonPlugin)
         .run();
 }

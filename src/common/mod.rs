@@ -20,6 +20,7 @@ pub enum ActiveEra {
     #[default]
     Democritus,
     Dalton,
+    Thomson,
 }
 
 /// Configuração do espaço (arena) onde os átomos se movem.
