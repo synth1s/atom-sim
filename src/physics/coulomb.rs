@@ -63,3 +63,73 @@ pub fn charge_to_mass_ratio(deflection_y: f32, e_field: f32, b_field: f32, plate
     }
     2.0 * deflection_y * e_field / (b_field * b_field * plate_length * plate_length)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_velocity_from_crossed_fields() {
+        // v = E/B. Para E=1000 V/m e B=0.01 T: v = 100000 m/s
+        let v = velocity_from_crossed_fields(1000.0, 0.01);
+        assert!((v - 100000.0).abs() < 1e-2, "v = E/B = {}", v);
+    }
+
+    #[test]
+    fn test_velocity_from_crossed_fields_zero_b() {
+        // B=0 deve retornar 0 (proteção contra divisão por zero)
+        let v = velocity_from_crossed_fields(1000.0, 0.0);
+        assert!((v - 0.0).abs() < 1e-10, "B=0 deve retornar 0, got {}", v);
+    }
+
+    #[test]
+    fn test_charge_to_mass_ratio() {
+        // Cenário: Thomson mede e/m
+        // e/m = 2·y·E / (B²·L²)
+        // Com y=0.01m, E=10000 V/m, B=0.001 T, L=0.1 m:
+        // e/m = 2 * 0.01 * 10000 / (0.001^2 * 0.1^2) = 200 / 1e-8 = 2e10
+        let ratio = charge_to_mass_ratio(0.01, 10000.0, 0.001, 0.1);
+        let expected = 2.0e10;
+        let rel_err = ((ratio - expected) / expected).abs();
+        assert!(rel_err < 1e-4, "e/m = {}, expected {}", ratio, expected);
+    }
+
+    #[test]
+    fn test_electron_deflection() {
+        // y = q·E·L² / (2·m·v²)
+        // Com q=1.0, E=100.0, L=0.5, m=1.0, v=10.0:
+        // y = 1.0 * 100.0 * 0.25 / (2.0 * 1.0 * 100.0) = 25 / 200 = 0.125
+        let y = electron_deflection(100.0, 0.5, 1.0, 1.0, 10.0);
+        assert!((y - 0.125).abs() < 1e-5, "deflection = {}", y);
+    }
+
+    #[test]
+    fn test_electron_deflection_zero_velocity() {
+        let y = electron_deflection(100.0, 0.5, 1.0, 1.0, 0.0);
+        assert!((y - 0.0).abs() < 1e-10, "v=0 deve retornar 0, got {}", y);
+    }
+
+    #[test]
+    fn test_thomson_oscillation_frequency() {
+        // Para H (1 elétron, raio atômico ~1 Å):
+        // ω ~ 4.4×10^16 rad/s (ordem de grandeza)
+        let omega = thomson_oscillation_frequency(1.0, 1.0);
+        assert!(omega > 1e15, "omega deve ser > 1e15, got {}", omega);
+        assert!(omega < 1e18, "omega deve ser < 1e18, got {}", omega);
+        // Valor mais preciso: ~4.4e16
+        let order = (omega as f64).log10();
+        assert!((order - 16.0).abs() < 1.0, "log10(omega) ~ 16, got {}", order);
+    }
+
+    #[test]
+    fn test_charge_to_mass_ratio_zero_b() {
+        let ratio = charge_to_mass_ratio(0.01, 10000.0, 0.0, 0.1);
+        assert!((ratio - 0.0).abs() < 1e-10, "B=0 deve retornar 0");
+    }
+
+    #[test]
+    fn test_charge_to_mass_ratio_zero_length() {
+        let ratio = charge_to_mass_ratio(0.01, 10000.0, 0.001, 0.0);
+        assert!((ratio - 0.0).abs() < 1e-10, "L=0 deve retornar 0");
+    }
+}

@@ -100,6 +100,16 @@ Constantes fundamentais devem usar valores CODATA 2018 ou mais recentes. Desvio 
 ### C-007: Testes para funcoes de fisica
 Toda funcao publica em `physics/` deve ter pelo menos 1 teste unitario validando contra valor de referencia. Tolerancias devem ser explicitas nos asserts.
 
+### C-008: Cobertura de testes como gate de aceite
+**Data:** 2026-03-29
+**Contexto:** Projeto cresceu a 9500 LOC com apenas 16 testes (todos em physics/). Nenhum teste para eras, UI ou integracao. Identificado quando #11 exigiu refatoracao sem rede de seguranca.
+**Regra:** Toda entrega de feature ou refatoracao DEVE incluir testes que cubram o codigo alterado:
+(a) Toda funcao publica nova deve ter ao menos 1 teste
+(b) Todo setup/cleanup de era deve ter teste de spawn/despawn
+(c) Toda feature de UI deve ter ao menos 1 smoke test
+Entregas sem testes serao rejeitadas independente da qualidade do codigo.
+O criterio #6 de SE-001 e reclassificado de peso 3 para peso 5.
+
 ## Historico de Mudancas
 
 | Data | Decisao | Motivo |
@@ -113,3 +123,4 @@ Toda funcao publica em `physics/` deve ter pelo menos 1 teste unitario validando
 | 2026-03-29 | D-006 Ponto de encontro | Briefing no inicio de cada sessao antes de executar |
 | 2026-03-29 | D-007 Cadencia de ideacao | CP-001 propoe ideias a cada sprint se fila < 5 issues |
 | 2026-03-29 | D-008 Autonomia temporaria | Coordenador decide por proprietario ate retorno (sessao noturna) |
+| 2026-03-29 | C-008 Testes como gate | Toda entrega DEVE incluir testes. Sem testes = rejeicao automatica |

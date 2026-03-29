@@ -64,6 +64,35 @@ pub fn bounce_walls(
     }
 }
 
+/// Calcula o impulso de colisão elástica 1D entre duas massas.
+/// Retorna (dv1, dv2) — as mudanças de velocidade.
+///
+///   v1' = ((m1-m2)v1 + 2m2·v2) / (m1+m2)
+///   v2' = ((m2-m1)v2 + 2m1·v1) / (m1+m2)
+#[allow(dead_code)]
+pub fn elastic_collision_1d(m1: f32, v1: f32, m2: f32, v2: f32) -> (f32, f32) {
+    let total = m1 + m2;
+    if total < 1e-10 {
+        return (0.0, 0.0);
+    }
+    let v1_new = ((m1 - m2) * v1 + 2.0 * m2 * v2) / total;
+    let v2_new = ((m2 - m1) * v2 + 2.0 * m1 * v1) / total;
+    (v1_new, v2_new)
+}
+
+/// Verifica se uma posição está fora dos limites da arena e retorna
+/// a posição corrigida e se a velocidade deve ser invertida.
+#[allow(dead_code)]
+pub fn wall_reflect(pos: f32, radius: f32, half_extent: f32) -> (f32, bool) {
+    if pos - radius < -half_extent {
+        (-half_extent + radius, true)
+    } else if pos + radius > half_extent {
+        (half_extent - radius, true)
+    } else {
+        (pos, false)
+    }
+}
+
 /// Colisões elásticas entre pares de partículas.
 /// Conservação de momento e energia cinética:
 ///   v1' = v1 - (2*m2/(m1+m2)) * dot(v1-v2, x1-x2) / |x1-x2|^2 * (x1-x2)
@@ -120,5 +149,79 @@ pub fn collide_particles(
         if let Ok((_, _, mut vel, _, _)) = query.get_mut(entity) {
             vel.0 += dv;
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_wall_reflect_right_boundary() {
+        // Partícula com x + r > half_width deve ser refletida
+        let (new_pos, reflected) = wall_reflect(580.0, 10.0, 580.0);
+        assert!(reflected, "Deve refletir na parede direita");
+        assert!((new_pos - 570.0).abs() < 1e-5, "Posicao corrigida: {}", new_pos);
+    }
+
+    #[test]
+    fn test_wall_reflect_left_boundary() {
+        let (new_pos, reflected) = wall_reflect(-575.0, 10.0, 580.0);
+        assert!(reflected, "Deve refletir na parede esquerda");
+        assert!((new_pos - (-570.0)).abs() < 1e-5, "Posicao corrigida: {}", new_pos);
+    }
+
+    #[test]
+    fn test_wall_reflect_inside() {
+        let (new_pos, reflected) = wall_reflect(100.0, 10.0, 580.0);
+        assert!(!reflected, "Nao deve refletir dentro da arena");
+        assert!((new_pos - 100.0).abs() < 1e-5);
+    }
+
+    #[test]
+    fn test_elastic_collision_1d_equal_mass() {
+        // Massas iguais trocam velocidades
+        let (v1_new, v2_new) = elastic_collision_1d(1.0, 5.0, 1.0, -3.0);
+        assert!((v1_new - (-3.0)).abs() < 1e-5, "v1' = {}", v1_new);
+        assert!((v2_new - 5.0).abs() < 1e-5, "v2' = {}", v2_new);
+    }
+
+    #[test]
+    fn test_elastic_collision_1d_conserves_momentum() {
+        let m1 = 2.0;
+        let v1 = 3.0;
+        let m2 = 5.0;
+        let v2 = -1.0;
+        let p_before = m1 * v1 + m2 * v2;
+
+        let (v1_new, v2_new) = elastic_collision_1d(m1, v1, m2, v2);
+        let p_after = m1 * v1_new + m2 * v2_new;
+        assert!((p_before - p_after).abs() < 1e-4, "Momento: {} vs {}", p_before, p_after);
+    }
+
+    #[test]
+    fn test_elastic_collision_1d_conserves_energy() {
+        let m1 = 2.0;
+        let v1 = 3.0;
+        let m2 = 5.0;
+        let v2 = -1.0;
+        let ke_before = 0.5 * m1 * v1 * v1 + 0.5 * m2 * v2 * v2;
+
+        let (v1_new, v2_new) = elastic_collision_1d(m1, v1, m2, v2);
+        let ke_after = 0.5 * m1 * v1_new * v1_new + 0.5 * m2 * v2_new * v2_new;
+        assert!((ke_before - ke_after).abs() < 1e-3, "Energia: {} vs {}", ke_before, ke_after);
+    }
+
+    #[test]
+    fn test_elastic_collision_1d_stationary_target() {
+        // Bola atinge alvo parado com massa infinitamente maior -> quase para
+        let m1 = 1.0;
+        let v1 = 10.0;
+        let m2 = 1000.0;
+        let v2 = 0.0;
+
+        let (v1_new, _v2_new) = elastic_collision_1d(m1, v1, m2, v2);
+        // Bola leve deve inverter velocidade (quase -v1)
+        assert!(v1_new < 0.0, "Bola leve deve quicar: v1' = {}", v1_new);
     }
 }

@@ -137,6 +137,51 @@ mod tests {
     fn test_rydberg_constant() {
         assert!((RYDBERG_CONSTANT - 1.0974e7).abs() < 1e4, "R_H = {}", RYDBERG_CONSTANT);
     }
+
+    #[test]
+    fn test_transition_energy_balmer_alpha() {
+        // E(3->2) = 13.6*(1/4 - 1/9) = 13.6 * 5/36 ~ 1.889 eV
+        let e = transition_energy(3, 2);
+        assert!((e - 1.889).abs() < 0.05, "E(3->2) = {} eV, expected ~1.889", e);
+    }
+
+    #[test]
+    fn test_wavelength_to_color_red() {
+        // 656nm (Balmer alpha) deve ter componente R dominante
+        let color = wavelength_to_color(656.0);
+        let srgba = color.to_srgba();
+        assert!(srgba.red > 0.5, "656nm R deve ser > 0.5, got {}", srgba.red);
+        assert!(srgba.green < 0.3, "656nm G deve ser < 0.3, got {}", srgba.green);
+        assert!(srgba.blue < 0.1, "656nm B deve ser < 0.1, got {}", srgba.blue);
+    }
+
+    #[test]
+    fn test_wavelength_to_color_blue() {
+        // 486nm (Balmer beta, H-beta) deve ter componente B dominante
+        let color = wavelength_to_color(486.0);
+        let srgba = color.to_srgba();
+        assert!(srgba.blue > 0.5, "486nm B deve ser > 0.5, got {}", srgba.blue);
+        // Nesta faixa (440-490), g cresce e b=1.0
+        assert!(srgba.blue >= srgba.red, "486nm B >= R: B={} R={}", srgba.blue, srgba.red);
+    }
+
+    #[test]
+    fn test_series_name_all() {
+        assert_eq!(series_name(1), "Lyman (UV)");
+        assert_eq!(series_name(2), "Balmer (visivel)");
+        assert_eq!(series_name(3), "Paschen (IR)");
+        assert_eq!(series_name(4), "Brackett (IR)");
+        assert_eq!(series_name(5), "Pfund (IR)");
+        assert_eq!(series_name(6), "?");
+    }
+
+    #[test]
+    fn test_transition_frequency_positive() {
+        // Frequência de Lyman alpha deve ser positiva e da ordem de 10^15 Hz
+        let freq = transition_frequency(2, 1);
+        assert!(freq > 1e14, "freq Lyman alpha > 1e14 Hz, got {}", freq);
+        assert!(freq < 1e16, "freq Lyman alpha < 1e16 Hz, got {}", freq);
+    }
 }
 
 /// Nome da série espectral baseado no nível inferior.

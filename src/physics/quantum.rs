@@ -249,4 +249,72 @@ mod tests {
         let on_x = probability_density_2d(2, 1, 0, d, 0.0);
         assert!(on_y > on_x * 5.0, "2p lobe should be along y axis: on_y={} on_x={}", on_y, on_x);
     }
+
+    #[test]
+    fn test_laguerre_n2() {
+        // L_2^1(x) = (1/2)[(3-x)(3-x) - (3-x) - ... ]
+        // Usando a formula: L_2^1(x) = (1/2)(x^2 - 6x + 6) ... nao,
+        // L_n^alpha por recorrencia:
+        //   L_0^1 = 1
+        //   L_1^1 = 2 - x
+        //   L_2^1 = [(2*1+1+1-x)*L_1^1 - (1+1)*L_0^1] / 2
+        //         = [(4-x)(2-x) - 2] / 2
+        //         = [8-4x-2x+x^2 - 2] / 2
+        //         = [x^2 - 6x + 6] / 2
+        // Para x=1: L_2^1(1) = [1 - 6 + 6]/2 = 0.5
+        let val = laguerre(2, 1, 1.0);
+        assert!((val - 0.5).abs() < 1e-10, "L_2^1(1) = {}, expected 0.5", val);
+
+        // Para x=0: L_2^1(0) = [0 - 0 + 6]/2 = 3.0
+        let val0 = laguerre(2, 1, 0.0);
+        assert!((val0 - 3.0).abs() < 1e-10, "L_2^1(0) = {}, expected 3.0", val0);
+    }
+
+    #[test]
+    fn test_hydrogen_radial_1s_normalization() {
+        // Integral numérica de |R_10(r)|^2 * r^2 dr de 0 a infinito deve ser ~1
+        // Usamos integração por trapézios até r_max = 20*a0
+        let a0 = BOHR_RADIUS_M;
+        let r_max = 20.0 * a0;
+        let n_steps = 10000;
+        let dr = r_max / n_steps as f64;
+
+        let mut integral = 0.0;
+        for i in 1..n_steps {
+            let r = i as f64 * dr;
+            let r_val = hydrogen_radial(1, 0, r);
+            integral += r_val * r_val * r * r * dr;
+        }
+
+        assert!(
+            (integral - 1.0).abs() < 0.02,
+            "Integral |R_10|^2 r^2 dr = {}, expected ~1.0",
+            integral
+        );
+    }
+
+    #[test]
+    fn test_hydrogen_radial_2s_has_node() {
+        // R_20(r) tem um nó em r = 2*a0
+        // O valor deve trocar de sinal em torno de r = 2*a0
+        let a0 = BOHR_RADIUS_M;
+        let r_before = 1.5 * a0;
+        let r_after = 3.0 * a0;
+        let val_before = hydrogen_radial(2, 0, r_before);
+        let val_after = hydrogen_radial(2, 0, r_after);
+        assert!(
+            val_before * val_after < 0.0,
+            "R_20 deve ter nó entre 1.5a0 e 3a0: R(1.5a0)={}, R(3a0)={}",
+            val_before,
+            val_after
+        );
+    }
+
+    #[test]
+    fn test_associated_legendre_p20() {
+        // P_2^0(x) = (3x^2 - 1) / 2
+        // P_2^0(0.5) = (3*0.25 - 1)/2 = (0.75-1)/2 = -0.125
+        let val = associated_legendre(2, 0, 0.5);
+        assert!((val - (-0.125)).abs() < 1e-10, "P_2^0(0.5) = {}", val);
+    }
 }
