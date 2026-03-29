@@ -3,7 +3,7 @@ use rand::Rng;
 
 use crate::common::{ActiveEra, Arena, SimulationState};
 use crate::common::ui::{HudText, EraControls, LimitationText, LimitationVisible};
-use crate::physics::classical::{self, Mass, Radius, Velocity};
+use crate::physics::classical::{self, Mass, PhysicsBody, Radius, Velocity};
 
 pub struct DaltonPlugin;
 
@@ -15,7 +15,7 @@ impl Plugin for DaltonPlugin {
                 Update,
                 (
                     classical::move_particles,
-                    classical::bounce_walls(580.0, 320.0),
+                    classical::bounce_walls,
                     classical::collide_particles,
                     check_reactions,
                 )
@@ -280,6 +280,7 @@ fn setup_dalton(
             commands.spawn((
                 DaltonEntity,
                 element,
+                PhysicsBody,
                 Mesh2d(mesh_handle.clone()),
                 MeshMaterial2d(mat_handle.clone()),
                 Transform::from_xyz(x, y, 1.0),
@@ -354,6 +355,7 @@ fn check_reactions(
                     commands.spawn((
                         DaltonEntity,
                         Molecule { formula: formula.to_string() },
+                        PhysicsBody,
                         Mesh2d(assets.molecule_mesh.clone()),
                         MeshMaterial2d(assets.molecule_mat.clone()),
                         Transform::from_xyz(midpoint.x, midpoint.y, 2.0)
@@ -450,6 +452,7 @@ fn spawn_atom_on_click(
     commands.spawn((
         DaltonEntity,
         element,
+        PhysicsBody,
         Mesh2d(assets.elem_mesh[&element].clone()),
         MeshMaterial2d(assets.elem_mat[&element].clone()),
         Transform::from_xyz(world_pos.x, world_pos.y, 1.0),

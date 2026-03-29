@@ -1,5 +1,7 @@
 use bevy::prelude::*;
 
+use crate::common::Arena;
+
 /// Velocidade de uma partícula (px/s).
 #[derive(Component, Default, Clone)]
 pub struct Velocity(pub Vec2);
@@ -12,10 +14,16 @@ pub struct Radius(pub f32);
 #[derive(Component, Clone)]
 pub struct Mass(pub f32);
 
+/// Marcador genérico para entidades que participam da física clássica
+/// (movimento, colisão com paredes, colisão entre partículas).
+/// Cada era que usa esses systems deve adicionar este componente às suas entidades.
+#[derive(Component)]
+pub struct PhysicsBody;
+
 /// Move partículas segundo suas velocidades (cinemática linear).
 pub fn move_particles(
     time: Res<Time>,
-    mut query: Query<(&mut Transform, &Velocity)>,
+    mut query: Query<(&mut Transform, &Velocity), With<PhysicsBody>>,
 ) {
     let dt = time.delta_secs();
     for (mut transform, vel) in query.iter_mut() {
@@ -27,30 +35,31 @@ pub fn move_particles(
 /// Colisões elásticas com as paredes da arena.
 /// Conservação de momento: a parede tem massa infinita, então a partícula
 /// simplesmente inverte a componente normal da velocidade.
+/// Lê as dimensões diretamente do resource `Arena`.
 pub fn bounce_walls(
-    arena_half_w: f32,
-    arena_half_h: f32,
-) -> impl FnMut(Query<(&mut Transform, &mut Velocity, &Radius)>) {
-    move |mut query: Query<(&mut Transform, &mut Velocity, &Radius)>| {
-        for (mut transform, mut vel, radius) in query.iter_mut() {
-            let r = radius.0;
-            let pos = &mut transform.translation;
+    arena: Res<Arena>,
+    mut query: Query<(&mut Transform, &mut Velocity, &Radius), With<PhysicsBody>>,
+) {
+    let arena_half_w = arena.half_width;
+    let arena_half_h = arena.half_height;
+    for (mut transform, mut vel, radius) in query.iter_mut() {
+        let r = radius.0;
+        let pos = &mut transform.translation;
 
-            if pos.x - r < -arena_half_w {
-                pos.x = -arena_half_w + r;
-                vel.0.x = vel.0.x.abs();
-            } else if pos.x + r > arena_half_w {
-                pos.x = arena_half_w - r;
-                vel.0.x = -vel.0.x.abs();
-            }
+        if pos.x - r < -arena_half_w {
+            pos.x = -arena_half_w + r;
+            vel.0.x = vel.0.x.abs();
+        } else if pos.x + r > arena_half_w {
+            pos.x = arena_half_w - r;
+            vel.0.x = -vel.0.x.abs();
+        }
 
-            if pos.y - r < -arena_half_h {
-                pos.y = -arena_half_h + r;
-                vel.0.y = vel.0.y.abs();
-            } else if pos.y + r > arena_half_h {
-                pos.y = arena_half_h - r;
-                vel.0.y = -vel.0.y.abs();
-            }
+        if pos.y - r < -arena_half_h {
+            pos.y = -arena_half_h + r;
+            vel.0.y = vel.0.y.abs();
+        } else if pos.y + r > arena_half_h {
+            pos.y = arena_half_h - r;
+            vel.0.y = -vel.0.y.abs();
         }
     }
 }
@@ -60,7 +69,7 @@ pub fn bounce_walls(
 ///   v1' = v1 - (2*m2/(m1+m2)) * dot(v1-v2, x1-x2) / |x1-x2|^2 * (x1-x2)
 ///   v2' = v2 - (2*m1/(m1+m2)) * dot(v2-v1, x2-x1) / |x2-x1|^2 * (x2-x1)
 pub fn collide_particles(
-    mut query: Query<(Entity, &Transform, &mut Velocity, &Radius, &Mass)>,
+    mut query: Query<(Entity, &Transform, &mut Velocity, &Radius, &Mass), With<PhysicsBody>>,
 ) {
     let mut pairs: Vec<(Entity, Vec2, Vec2, f32, f32)> = Vec::new();
     for (entity, transform, vel, radius, mass) in query.iter() {

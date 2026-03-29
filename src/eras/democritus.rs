@@ -3,7 +3,7 @@ use rand::Rng;
 
 use crate::common::{ActiveEra, Arena, HudPlugin, SimulationState};
 use crate::common::ui::{HudText, EraControls, LimitationText, LimitationVisible};
-use crate::physics::classical::{self, Mass, Radius, Velocity};
+use crate::physics::classical::{self, Mass, PhysicsBody, Radius, Velocity};
 
 pub struct DemocritusPlugin;
 
@@ -17,7 +17,7 @@ impl Plugin for DemocritusPlugin {
                 Update,
                 (
                     classical::move_particles,
-                    classical::bounce_walls(580.0, 320.0),
+                    classical::bounce_walls,
                     classical::collide_particles,
                 )
                     .chain()
@@ -144,6 +144,7 @@ fn setup_democritus(
         commands.spawn((
             DemocritusEntity,
             DemocritusAtom,
+            PhysicsBody,
             Mesh2d(mesh.clone()),
             MeshMaterial2d(material.clone()),
             Transform::from_xyz(x, y, 1.0),
@@ -199,6 +200,7 @@ fn spawn_atom_on_click(
     commands.spawn((
         DemocritusEntity,
         DemocritusAtom,
+        PhysicsBody,
         Mesh2d(assets.mesh.clone()),
         MeshMaterial2d(assets.material.clone()),
         Transform::from_xyz(world_pos.x, world_pos.y, 1.0),
