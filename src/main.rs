@@ -11,6 +11,7 @@ use eras::rutherford::RutherfordPlugin;
 use eras::bohr::BohrPlugin;
 use eras::sommerfeld::SommerfeldPlugin;
 use eras::de_broglie::DeBrogliePlugin;
+use eras::schrodinger::SchrodingerPlugin;
 
 fn main() {
     App::new()
@@ -32,5 +33,6 @@ fn main() {
         .add_plugins(BohrPlugin)
         .add_plugins(SommerfeldPlugin)
         .add_plugins(DeBrogliePlugin)
+        .add_plugins(SchrodingerPlugin)
         .run();
 }
