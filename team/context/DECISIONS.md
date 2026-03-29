@@ -42,6 +42,17 @@
 **Decisao:** No inicio de cada sessao de trabalho, o coordenador deve apresentar um briefing com: (1) o que foi feito na ultima sessao, (2) o que esta planejado para esta sessao, (3) decisoes pendentes do proprietario, (4) bloqueios. O proprietario aprova ou redireciona antes de iniciar execucao.
 **Aplica-se a:** Coordenador (Claude principal), inicio de toda conversa.
 
+### D-007: Cadencia de ideacao — backlog nunca esvazia
+**Data:** 2026-03-29
+**Contexto:** Nao havia cadencia para propor novas ideias. Quando a fila esvaziar, o time para.
+**Decisao:** A cada sprint concluido, o CP-001 deve:
+1. Avaliar o que foi entregue e o que resta na fila
+2. Se a fila estiver abaixo de 5 issues abertas, propor 3-5 novas ideias
+3. AD-001 quantifica as novas ideias (Score ROI, LOC, risco)
+4. Novas issues criadas no GitHub Project
+5. Proprietario prioriza antes do proximo sprint
+**Aplica-se a:** CP-001, AD-001, GP-001 (dispara o ciclo).
+
 ## Protocolo de Sincronizacao de Memoria
 
 O coordenador e a UNICA ponte entre os dois silos. Apos cada entrega significativa:
@@ -100,3 +111,4 @@ Toda funcao publica em `physics/` deve ter pelo menos 1 teste unitario validando
 | 2026-03-29 | C-001 a C-007 | Extraidos das avaliacoes SE-001/PH-001/UX-001 |
 | 2026-03-29 | D-005 Sincronizacao | Dois silos de memoria isolados precisam de ponte manual |
 | 2026-03-29 | D-006 Ponto de encontro | Briefing no inicio de cada sessao antes de executar |
+| 2026-03-29 | D-007 Cadencia de ideacao | CP-001 propoe ideias a cada sprint se fila < 5 issues |
