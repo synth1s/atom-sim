@@ -6,3 +6,4 @@ pub mod bohr;
 pub mod sommerfeld;
 pub mod de_broglie;
 pub mod schrodinger;
+pub mod dirac;
