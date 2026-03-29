@@ -7,6 +7,8 @@ use crate::common::quiz::{EraQuiz, QuestionData, QuizState};
 use crate::common::predict::{EraPredictions, Prediction, PredictState};
 use crate::common::sandbox::EraParameters;
 use crate::common::narrative::{EraNarrative, NarrativeStep};
+use crate::common::experiment::{EraExperiment, ExperimentStep};
+use crate::common::walkthrough::EraDerivation;
 use crate::common::tooltip::Tooltip;
 use crate::common::export::ExportableData;
 use crate::physics::spectral;
@@ -240,6 +242,34 @@ fn setup_bohr(
     ]));
     commands.insert_resource(PredictState::default());
 
+    commands.insert_resource(EraExperiment {
+        name: "Espectro do Hidrogenio".to_string(),
+        year: "1913".to_string(),
+        apparatus: "Tubo de gas H + prisma + detector".to_string(),
+        steps: vec![
+            ExperimentStep {
+                description: "Descer eletron de n=3 para n=2".to_string(),
+                action: "Foton vermelho emitido (H-alfa, 656 nm)".to_string(),
+            },
+            ExperimentStep {
+                description: "Descer de n=4 para n=2".to_string(),
+                action: "Foton azul (H-beta, 486 nm)".to_string(),
+            },
+            ExperimentStep {
+                description: "Descer de n=2 para n=1".to_string(),
+                action: "Foton UV invisivel (Lyman-alfa, 121 nm)".to_string(),
+            },
+        ],
+    });
+
+    commands.insert_resource(EraDerivation(vec![
+        "Forca centripeta = Forca Coulomb".to_string(),
+        "m*v^2/r = k*e^2/r^2".to_string(),
+        "Quantizacao: m*v*r = n*hbar  =>  v = n*hbar/(m*r)".to_string(),
+        "Substituindo: n^2*hbar^2/(m*r) = k*e^2/r^2".to_string(),
+        "r_n = n^2 * hbar^2/(m*k*e^2) = n^2 * a0".to_string(),
+    ]));
+
     commands.insert_resource(EraNarrative(vec![
         NarrativeStep {
             text: "O eletron orbita em niveis discretos de energia.".to_string(),
@@ -372,6 +402,8 @@ fn cleanup_bohr(
     commands.remove_resource::<EraParameters>();
     commands.remove_resource::<EraNarrative>();
     commands.remove_resource::<EraEvidence>();
+    commands.remove_resource::<EraExperiment>();
+    commands.remove_resource::<EraDerivation>();
 }
 
 // ---------------------------------------------------------------------------

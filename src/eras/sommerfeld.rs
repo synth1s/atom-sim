@@ -8,6 +8,8 @@ use crate::common::quiz::{EraQuiz, QuestionData, QuizState};
 use crate::common::predict::{EraPredictions, Prediction, PredictState};
 use crate::common::sandbox::EraParameters;
 use crate::common::narrative::{EraNarrative, NarrativeStep};
+use crate::common::experiment::{EraExperiment, ExperimentStep};
+use crate::common::walkthrough::EraDerivation;
 use crate::physics::spectral;
 
 pub struct SommerfeldPlugin;
@@ -247,6 +249,28 @@ fn setup_sommerfeld(
     ]));
     commands.insert_resource(PredictState::default());
 
+    commands.insert_resource(EraExperiment {
+        name: "Experimento conceitual".to_string(),
+        year: "1916".to_string(),
+        apparatus: "Espectrometro de alta resolucao + campo magnetico".to_string(),
+        steps: vec![
+            ExperimentStep {
+                description: "Observar desdobramento de linhas espectrais".to_string(),
+                action: "Estrutura fina: linhas duplas onde Bohr preve uma".to_string(),
+            },
+            ExperimentStep {
+                description: "Aplicar campo magnetico (efeito Zeeman)".to_string(),
+                action: "Linhas se dividem em 2l+1 componentes".to_string(),
+            },
+        ],
+    });
+
+    commands.insert_resource(EraDerivation(vec![
+        "Orbitas elipticas: dois numeros quanticos n e k (k=1..n)".to_string(),
+        "Correcao relativistica: E_nk = E_Bohr * (1 + alpha^2/n * (n/k - 3/4))".to_string(),
+        "alpha = e^2/(hbar*c) ~ 1/137 — constante de estrutura fina".to_string(),
+    ]));
+
     commands.insert_resource(EraNarrative(vec![
         NarrativeStep {
             text: "Observe: orbitas elipticas com diferentes excentricidades.".to_string(),
@@ -391,6 +415,8 @@ fn cleanup_sommerfeld(
     commands.remove_resource::<EraParameters>();
     commands.remove_resource::<EraNarrative>();
     commands.remove_resource::<EraEvidence>();
+    commands.remove_resource::<EraExperiment>();
+    commands.remove_resource::<EraDerivation>();
 }
 
 // ---------------------------------------------------------------------------

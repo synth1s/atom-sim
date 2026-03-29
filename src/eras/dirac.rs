@@ -9,6 +9,8 @@ use crate::common::quiz::{EraQuiz, QuestionData, QuizState};
 use crate::common::predict::{EraPredictions, Prediction, PredictState};
 use crate::common::sandbox::EraParameters;
 use crate::common::narrative::{EraNarrative, NarrativeStep};
+use crate::common::experiment::{EraExperiment, ExperimentStep};
+use crate::common::walkthrough::EraDerivation;
 use crate::common::export::ExportableData;
 use crate::physics::spectral;
 
@@ -264,6 +266,28 @@ fn setup_dirac(
     ]));
     commands.insert_resource(PredictState::default());
 
+    commands.insert_resource(EraExperiment {
+        name: "Experimento conceitual".to_string(),
+        year: "1928-1932".to_string(),
+        apparatus: "Camara de nuvens + campo magnetico (Anderson, 1932)".to_string(),
+        steps: vec![
+            ExperimentStep {
+                description: "Observar tracos na camara de nuvens".to_string(),
+                action: "Traco curvado como eletron, mas sentido oposto: positron!".to_string(),
+            },
+            ExperimentStep {
+                description: "Verificar criacao de pares".to_string(),
+                action: "Foton energetico -> eletron + positron (E > 2*m_e*c^2)".to_string(),
+            },
+        ],
+    });
+
+    commands.insert_resource(EraDerivation(vec![
+        "Equacao de Dirac: (i*gamma^mu * d_mu - m)*psi = 0".to_string(),
+        "Solucoes de energia negativa -> antimateria (positron)".to_string(),
+        "Spin emerge naturalmente do formalismo relativistico".to_string(),
+    ]));
+
     commands.insert_resource(EraNarrative(vec![
         NarrativeStep {
             text: "Observe: pares eletron-positron surgindo do vacuo (E = mc^2).".to_string(),
@@ -456,6 +480,8 @@ fn cleanup_dirac(
     commands.remove_resource::<EraParameters>();
     commands.remove_resource::<EraNarrative>();
     commands.remove_resource::<EraEvidence>();
+    commands.remove_resource::<EraExperiment>();
+    commands.remove_resource::<EraDerivation>();
 }
 
 // ---------------------------------------------------------------------------

@@ -13,6 +13,8 @@ pub mod narrative;
 pub mod evidence;
 pub mod quantum_explorer;
 pub mod predict;
+pub mod experiment;
+pub mod walkthrough;
 
 pub use camera::CameraPlugin;
 pub use ui::HudPlugin;
@@ -29,6 +31,8 @@ pub use narrative::NarrativePlugin;
 pub use evidence::EvidencePlugin;
 pub use quantum_explorer::QuantumExplorerPlugin;
 pub use predict::PredictPlugin;
+pub use experiment::ExperimentPlugin;
+pub use walkthrough::WalkthroughPlugin;
 
 use bevy::prelude::*;
 

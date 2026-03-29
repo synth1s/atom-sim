@@ -10,6 +10,8 @@ use crate::common::quiz::{EraQuiz, QuestionData, QuizState};
 use crate::common::predict::{EraPredictions, Prediction, PredictState};
 use crate::common::sandbox::EraParameters;
 use crate::common::narrative::{EraNarrative, NarrativeStep};
+use crate::common::experiment::{EraExperiment, ExperimentStep};
+use crate::common::walkthrough::EraDerivation;
 use crate::physics::coulomb;
 
 pub struct ThomsonPlugin;
@@ -257,6 +259,32 @@ fn setup_thomson(
     ]));
     commands.insert_resource(PredictState::default());
 
+    commands.insert_resource(EraExperiment {
+        name: "Tubo de Raios Catodicos".to_string(),
+        year: "1897".to_string(),
+        apparatus: "Tubo de vidro evacuado + placas + bobinas".to_string(),
+        steps: vec![
+            ExperimentStep {
+                description: "Observar o feixe sem campos".to_string(),
+                action: "O feixe vai reto ate a tela".to_string(),
+            },
+            ExperimentStep {
+                description: "Ativar campo E (setas cima/baixo)".to_string(),
+                action: "O feixe e deflectido verticalmente".to_string(),
+            },
+            ExperimentStep {
+                description: "Ajustar campo B para cancelar".to_string(),
+                action: "Quando v=E/B, calcular e/m".to_string(),
+            },
+        ],
+    });
+
+    commands.insert_resource(EraDerivation(vec![
+        "Forca sobre eletron no campo E: F = eE".to_string(),
+        "Deflexao vertical: y = eE*L^2/(2*m*v^2)".to_string(),
+        "Campo B cancela deflexao quando eE = evB => v = E/B".to_string(),
+    ]));
+
     commands.insert_resource(EraNarrative(vec![
         NarrativeStep {
             text: "Observe: eletrons embutidos numa esfera positiva (pudim de passas).".to_string(),
@@ -437,6 +465,8 @@ fn cleanup_thomson(
     commands.remove_resource::<EraParameters>();
     commands.remove_resource::<EraNarrative>();
     commands.remove_resource::<EraEvidence>();
+    commands.remove_resource::<EraExperiment>();
+    commands.remove_resource::<EraDerivation>();
 }
 
 // ---------------------------------------------------------------------------

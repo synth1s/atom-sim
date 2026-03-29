@@ -9,6 +9,8 @@ use crate::common::quiz::{EraQuiz, QuestionData, QuizState};
 use crate::common::predict::{EraPredictions, Prediction, PredictState};
 use crate::common::sandbox::EraParameters;
 use crate::common::narrative::{EraNarrative, NarrativeStep};
+use crate::common::experiment::{EraExperiment, ExperimentStep};
+use crate::common::walkthrough::EraDerivation;
 use crate::physics::classical::{self, Mass, PhysicsBody, Radius, Velocity};
 
 pub struct DaltonPlugin;
@@ -270,6 +272,28 @@ fn setup_dalton(
     ]));
     commands.insert_resource(PredictState::default());
 
+    commands.insert_resource(EraExperiment {
+        name: "Experimento conceitual".to_string(),
+        year: "1803-1808".to_string(),
+        apparatus: "Balanca analitica + reagentes quimicos".to_string(),
+        steps: vec![
+            ExperimentStep {
+                description: "Pesar reagentes antes e depois da reacao".to_string(),
+                action: "Massa se conserva (Lavoisier)".to_string(),
+            },
+            ExperimentStep {
+                description: "Medir proporcoes de combinacao".to_string(),
+                action: "Proporcoes sao sempre inteiros simples (lei de Dalton)".to_string(),
+            },
+        ],
+    });
+
+    commands.insert_resource(EraDerivation(vec![
+        "Lei das proporcoes definidas: compostos tem razoes fixas de massa".to_string(),
+        "Lei das proporcoes multiplas: razoes sao inteiros simples".to_string(),
+        "Conclusao: materia e feita de atomos com massas definidas".to_string(),
+    ]));
+
     commands.insert_resource(EraNarrative(vec![
         NarrativeStep {
             text: "Observe: elementos com cores e tamanhos distintos (H, C, N, O).".to_string(),
@@ -409,6 +433,8 @@ fn cleanup_dalton(
     commands.remove_resource::<EraParameters>();
     commands.remove_resource::<EraNarrative>();
     commands.remove_resource::<EraEvidence>();
+    commands.remove_resource::<EraExperiment>();
+    commands.remove_resource::<EraDerivation>();
 }
 
 // ---------------------------------------------------------------------------

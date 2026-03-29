@@ -8,6 +8,8 @@ use crate::common::quiz::{EraQuiz, QuestionData, QuizState};
 use crate::common::predict::{EraPredictions, Prediction, PredictState};
 use crate::common::sandbox::EraParameters;
 use crate::common::narrative::{EraNarrative, NarrativeStep};
+use crate::common::experiment::{EraExperiment, ExperimentStep};
+use crate::common::walkthrough::EraDerivation;
 use crate::common::tooltip::Tooltip;
 use crate::common::export::ExportableData;
 use crate::physics::{quantum, spectral};
@@ -198,6 +200,29 @@ fn setup_schrodinger(
     ]));
     commands.insert_resource(PredictState::default());
 
+    commands.insert_resource(EraExperiment {
+        name: "Nuvem de probabilidade".to_string(),
+        year: "1926".to_string(),
+        apparatus: "Modelo matematico — equacao de onda".to_string(),
+        steps: vec![
+            ExperimentStep {
+                description: "Resolver a equacao de Schrodinger para H".to_string(),
+                action: "Obter |psi|^2 como densidade de probabilidade".to_string(),
+            },
+            ExperimentStep {
+                description: "Clicar para colapsar a funcao de onda".to_string(),
+                action: "Medicao localiza o eletron — principio de incerteza".to_string(),
+            },
+        ],
+    });
+
+    commands.insert_resource(EraDerivation(vec![
+        "Equacao de onda: ih*dpsi/dt = H*psi".to_string(),
+        "H = -hbar^2/(2m)*nabla^2 + V(r)".to_string(),
+        "Separacao: psi(r,t,f) = R(r)*Y(t,f)*T(t)".to_string(),
+        "Solucao: R_nl com Laguerre, Y_lm com Legendre".to_string(),
+    ]));
+
     commands.insert_resource(EraNarrative(vec![
         NarrativeStep {
             text: "Observe: nuvem de probabilidade |psi|^2 — o eletron nao tem orbita definida.".to_string(),
@@ -263,6 +288,8 @@ fn cleanup_schrodinger(
     commands.remove_resource::<EraParameters>();
     commands.remove_resource::<EraNarrative>();
     commands.remove_resource::<EraEvidence>();
+    commands.remove_resource::<EraExperiment>();
+    commands.remove_resource::<EraDerivation>();
 }
 
 // ---------------------------------------------------------------------------

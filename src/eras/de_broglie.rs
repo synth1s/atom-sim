@@ -9,6 +9,8 @@ use crate::common::quiz::{EraQuiz, QuestionData, QuizState};
 use crate::common::predict::{EraPredictions, Prediction, PredictState};
 use crate::common::sandbox::EraParameters;
 use crate::common::narrative::{EraNarrative, NarrativeStep};
+use crate::common::experiment::{EraExperiment, ExperimentStep};
+use crate::common::walkthrough::EraDerivation;
 
 pub struct DeBrogliePlugin;
 
@@ -229,6 +231,28 @@ fn setup_de_broglie(
     ]));
     commands.insert_resource(PredictState::default());
 
+    commands.insert_resource(EraExperiment {
+        name: "Difracao de eletrons".to_string(),
+        year: "1924-1927".to_string(),
+        apparatus: "Feixe de eletrons + cristal de niquel (Davisson-Germer)".to_string(),
+        steps: vec![
+            ExperimentStep {
+                description: "Acelerar eletrons com potencial V".to_string(),
+                action: "lambda = h/sqrt(2*m*e*V)".to_string(),
+            },
+            ExperimentStep {
+                description: "Observar padrao de difracao no detector".to_string(),
+                action: "Maximos em angulos previstos por n*lambda = d*sin(theta)".to_string(),
+            },
+        ],
+    });
+
+    commands.insert_resource(EraDerivation(vec![
+        "Einstein (1905): E = h*nu para fotons".to_string(),
+        "Compton (1923): p = h/lambda para fotons".to_string(),
+        "De Broglie (1924): lambda = h/p para QUALQUER particula".to_string(),
+    ]));
+
     commands.insert_resource(EraNarrative(vec![
         NarrativeStep {
             text: "Observe: a onda estacionaria envolvendo a orbita do eletron.".to_string(),
@@ -383,6 +407,8 @@ fn cleanup_de_broglie(
     commands.remove_resource::<EraParameters>();
     commands.remove_resource::<EraNarrative>();
     commands.remove_resource::<EraEvidence>();
+    commands.remove_resource::<EraExperiment>();
+    commands.remove_resource::<EraDerivation>();
 }
 
 // ---------------------------------------------------------------------------

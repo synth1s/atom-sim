@@ -8,6 +8,8 @@ use crate::common::quiz::{EraQuiz, QuestionData, QuizState};
 use crate::common::predict::{EraPredictions, Prediction, PredictState};
 use crate::common::sandbox::EraParameters;
 use crate::common::narrative::{EraNarrative, NarrativeStep};
+use crate::common::experiment::{EraExperiment, ExperimentStep};
+use crate::common::walkthrough::EraDerivation;
 use crate::common::tooltip::Tooltip;
 use crate::common::export::ExportableData;
 
@@ -276,6 +278,32 @@ fn setup_rutherford(
     ]));
     commands.insert_resource(PredictState::default());
 
+    commands.insert_resource(EraExperiment {
+        name: "Folha de Ouro de Geiger-Marsden".to_string(),
+        year: "1909-1913".to_string(),
+        apparatus: "Fonte de Ra-222 + folha Au + detector ZnS".to_string(),
+        steps: vec![
+            ExperimentStep {
+                description: "Observar as alfas sendo disparadas".to_string(),
+                action: "Maioria passa com deflexao minima".to_string(),
+            },
+            ExperimentStep {
+                description: "Contar retroespalhamentos no histograma".to_string(),
+                action: "~1/8000 volta a >90 graus".to_string(),
+            },
+            ExperimentStep {
+                description: "Ativar colapso classico [C]".to_string(),
+                action: "O atomo colapsa em ~16 ps -- impossivel!".to_string(),
+            },
+        ],
+    });
+
+    commands.insert_resource(EraDerivation(vec![
+        "Secao de choque Rutherford: dsigma/dOmega = (Z1*Z2*e^2/(4E))^2 / sin^4(theta/2)".to_string(),
+        "Distancia de maxima aproximacao: d = Z1*Z2*e^2/(4*pi*eps0*E)".to_string(),
+        "Fracao retroespalhada ~ (Z*e^2/(4E))^2 * pi * n * t".to_string(),
+    ]));
+
     commands.insert_resource(EraNarrative(vec![
         NarrativeStep {
             text: "Observe: alfas sendo disparadas contra folha de ouro (Au Z=79).".to_string(),
@@ -408,6 +436,8 @@ fn cleanup_rutherford(
     commands.remove_resource::<EraParameters>();
     commands.remove_resource::<EraNarrative>();
     commands.remove_resource::<EraEvidence>();
+    commands.remove_resource::<EraExperiment>();
+    commands.remove_resource::<EraDerivation>();
 }
 
 // ---------------------------------------------------------------------------

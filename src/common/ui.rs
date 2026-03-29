@@ -130,7 +130,9 @@ fn update_controls_hud(
                 [G] Modo Guiado\n\
                 [H] Evidencias\n\
                 [N] Quanticos\n\
-                [F1] Predicao";
+                [F1] Predicao\n\
+                [F2] Experimento\n\
+                [F3] Derivacao";
 
     let full = if era_controls.0.is_empty() {
         base.to_string()

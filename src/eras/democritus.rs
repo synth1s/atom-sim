@@ -9,6 +9,8 @@ use crate::common::quiz::{EraQuiz, QuestionData, QuizState};
 use crate::common::predict::{EraPredictions, Prediction, PredictState};
 use crate::common::sandbox::EraParameters;
 use crate::common::narrative::{EraNarrative, NarrativeStep};
+use crate::common::experiment::{EraExperiment, ExperimentStep};
+use crate::common::walkthrough::EraDerivation;
 use crate::physics::classical::{self, Mass, PhysicsBody, Radius, Velocity};
 
 pub struct DemocritusPlugin;
@@ -170,6 +172,27 @@ fn setup_democritus(
     ]));
     commands.insert_resource(PredictState::default());
 
+    commands.insert_resource(EraExperiment {
+        name: "Experimento conceitual".to_string(),
+        year: "~400 a.C.".to_string(),
+        apparatus: "Argumento filosofico — divisao infinita da materia".to_string(),
+        steps: vec![
+            ExperimentStep {
+                description: "Dividir materia repetidamente".to_string(),
+                action: "Em algum ponto, a divisao deve parar: atomos".to_string(),
+            },
+            ExperimentStep {
+                description: "Observar colisoes entre atomos".to_string(),
+                action: "Atomos sao indivisiveis e identicos".to_string(),
+            },
+        ],
+    });
+
+    commands.insert_resource(EraDerivation(vec![
+        "Hipotese: materia nao e infinitamente divisivel".to_string(),
+        "Conclusao: existem particulas fundamentais — atomos".to_string(),
+    ]));
+
     commands.insert_resource(EraNarrative(vec![
         NarrativeStep {
             text: "Observe: particulas identicas colidindo no vazio.".to_string(),
@@ -268,6 +291,8 @@ fn cleanup_democritus(
     commands.remove_resource::<EraParameters>();
     commands.remove_resource::<EraNarrative>();
     commands.remove_resource::<EraEvidence>();
+    commands.remove_resource::<EraExperiment>();
+    commands.remove_resource::<EraDerivation>();
 }
 
 fn spawn_atom_on_click(
