@@ -1,0 +1,527 @@
+use bevy::prelude::*;
+use rand::Rng;
+use crate::common::{ActiveEra, SimulationState};
+use crate::common::ui::HudText;
+
+pub struct RutherfordPlugin;
+
+impl Plugin for RutherfordPlugin {
+    fn build(&self, app: &mut App) {
+        app.add_systems(OnEnter(ActiveEra::Rutherford), setup_rutherford)
+            .add_systems(OnExit(ActiveEra::Rutherford), cleanup_rutherford)
+            .add_systems(
+                Update,
+                (
+                    update_alpha_particles,
+                    fire_alpha_particles,
+                    classical_collapse_system,
+                    update_rutherford_hud,
+                )
+                    .run_if(in_state(ActiveEra::Rutherford))
+                    .run_if(in_state(SimulationState::Running)),
+            )
+            .add_systems(
+                Update,
+                rutherford_controls.run_if(in_state(ActiveEra::Rutherford)),
+            );
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Components
+// ---------------------------------------------------------------------------
+
+#[derive(Component)]
+struct RutherfordEntity;
+
+/// O núcleo atômico — ponto denso de carga positiva.
+/// Rutherford provou: raio ~10⁻¹⁵ m vs átomo ~10⁻¹⁰ m (100.000× menor).
+#[derive(Component)]
+struct Nucleus {
+    #[allow(dead_code)]
+    charge_z: f32, // Número atômico (Au = 79)
+}
+
+/// Partícula alfa no experimento de Geiger-Marsden.
+/// He²⁺: carga +2e, massa ~4u, energia ~5.5 MeV.
+#[derive(Component)]
+struct AlphaParticle {
+    vel: Vec2,
+    trail: Vec<Vec2>, // Rastro da trajetória
+}
+
+/// Elétron orbitando no modelo de Rutherford.
+#[derive(Component)]
+struct OrbitalElectron {
+    angle: f32,
+    radius: f32,
+    angular_vel: f32,
+    // Para demonstração de colapso:
+    #[allow(dead_code)]
+    radiating: bool,
+    #[allow(dead_code)]
+    energy: f32,
+}
+
+// ---------------------------------------------------------------------------
+// Resources
+// ---------------------------------------------------------------------------
+
+#[derive(Resource)]
+struct ExperimentConfig {
+    alpha_speed: f32,
+    firing: bool,
+    fire_timer: f32,
+    show_collapse: bool,
+}
+
+impl Default for ExperimentConfig {
+    fn default() -> Self {
+        Self {
+            alpha_speed: 400.0,
+            firing: true,
+            fire_timer: 0.0,
+            show_collapse: false,
+        }
+    }
+}
+
+/// Histograma de deflexões (buckets de 10° de 0° a 180°).
+#[derive(Resource)]
+struct DeflectionHistogram {
+    bins: [usize; 18], // 0-10, 10-20, ..., 170-180
+    total: usize,
+    backscattered: usize, // >90°
+}
+
+impl Default for DeflectionHistogram {
+    fn default() -> Self {
+        Self {
+            bins: [0; 18],
+            total: 0,
+            backscattered: 0,
+        }
+    }
+}
+
+#[derive(Component)]
+struct RutherfordInfoText;
+
+#[derive(Component)]
+struct HistogramBar(usize); // index do bin
+
+// ---------------------------------------------------------------------------
+// Constants
+// ---------------------------------------------------------------------------
+
+const NUCLEUS_POS: Vec2 = Vec2::new(-100.0, 0.0);
+const NUCLEUS_VISUAL_RADIUS: f32 = 5.0; // Visualmente pequeno (real: 10⁵× menor que átomo)
+const ATOM_VISUAL_RADIUS: f32 = 150.0;  // Raio do "átomo" (nuvem de elétrons)
+
+// Coulomb scattering: k = Z₁Z₂e²/(4πε₀)
+// Em unidades de simulação, usamos um fator de força efetivo:
+const COULOMB_K: f32 = 50000.0; // Z₁=2 (alfa) × Z₂=79 (Au), normalizado
+
+const ALPHA_SPAWN_X: f32 = 350.0;
+const ALPHA_DESPAWN_X: f32 = -450.0;
+
+const HISTOGRAM_X: f32 = 300.0;
+const HISTOGRAM_Y: f32 = -50.0;
+
+// ---------------------------------------------------------------------------
+// Setup & Cleanup
+// ---------------------------------------------------------------------------
+
+fn setup_rutherford(
+    mut commands: Commands,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<ColorMaterial>>,
+    mut hud_query: Query<&mut Text2d, With<HudText>>,
+) {
+    for mut text in hud_query.iter_mut() {
+        *text = Text2d::new(
+            "RUTHERFORD (1911) \u{2014} O Nucleo Atomico\n\n\
+             Geiger-Marsden dispararam alfas contra folha\n\
+             de ouro. Maioria passou, mas ~1/8000 voltou!\n\
+             Conclusao: nucleo denso e positivo, 10^5x\n\
+             menor que o atomo.\n\n\
+             LIMITACAO: Eletrons orbitando radiam energia\n\
+             (Larmor). Colapso em ~16 picossegundos!"
+        );
+    }
+
+    commands.init_resource::<ExperimentConfig>();
+    commands.insert_resource(DeflectionHistogram::default());
+
+    // Núcleo — ponto vermelho minúsculo
+    commands.spawn((
+        RutherfordEntity,
+        Nucleus { charge_z: 79.0 },
+        Mesh2d(meshes.add(Circle::new(NUCLEUS_VISUAL_RADIUS))),
+        MeshMaterial2d(materials.add(ColorMaterial::from_color(
+            Color::srgba(1.0, 0.2, 0.15, 1.0),
+        ))),
+        Transform::from_xyz(NUCLEUS_POS.x, NUCLEUS_POS.y, 2.0),
+    ));
+
+    // Atom outline (nuvem de elétrons)
+    commands.spawn((
+        RutherfordEntity,
+        Mesh2d(meshes.add(Circle::new(ATOM_VISUAL_RADIUS))),
+        MeshMaterial2d(materials.add(ColorMaterial::from_color(
+            Color::srgba(0.3, 0.3, 0.5, 0.08),
+        ))),
+        Transform::from_xyz(NUCLEUS_POS.x, NUCLEUS_POS.y, 0.1),
+    ));
+
+    // Labels
+    commands.spawn((
+        RutherfordEntity,
+        Text2d::new("Nucleo (+79e)"),
+        TextFont { font_size: 11.0, ..default() },
+        TextColor(Color::srgba(1.0, 0.3, 0.2, 0.8)),
+        Transform::from_xyz(NUCLEUS_POS.x, NUCLEUS_POS.y - 15.0, 10.0),
+    ));
+
+    // Orbiting electrons (3 elétrons)
+    let electron_mesh = meshes.add(Circle::new(4.0));
+    let electron_mat = materials.add(ColorMaterial::from_color(
+        Color::srgba(0.3, 0.6, 1.0, 0.9),
+    ));
+
+    for i in 0..3 {
+        let angle = (i as f32 / 3.0) * std::f32::consts::TAU;
+        let radius = 60.0 + i as f32 * 30.0;
+        commands.spawn((
+            RutherfordEntity,
+            OrbitalElectron {
+                angle,
+                radius,
+                angular_vel: 3.0 / (radius / 60.0), // Mais rápido perto do núcleo
+                radiating: false,
+                energy: -13.6 / ((i + 1) as f32 * (i + 1) as f32), // eV (Bohr preview)
+            },
+            Mesh2d(electron_mesh.clone()),
+            MeshMaterial2d(electron_mat.clone()),
+            Transform::from_xyz(
+                NUCLEUS_POS.x + angle.cos() * radius,
+                NUCLEUS_POS.y + angle.sin() * radius,
+                1.5,
+            ),
+        ));
+    }
+
+    // Histogram bars
+    let bar_mesh = meshes.add(Rectangle::new(8.0, 1.0));
+    let bar_mat = materials.add(ColorMaterial::from_color(
+        Color::srgba(0.2, 0.8, 0.3, 0.8),
+    ));
+    for i in 0..18 {
+        commands.spawn((
+            RutherfordEntity,
+            HistogramBar(i),
+            Mesh2d(bar_mesh.clone()),
+            MeshMaterial2d(bar_mat.clone()),
+            Transform::from_xyz(
+                HISTOGRAM_X + i as f32 * 12.0,
+                HISTOGRAM_Y,
+                5.0,
+            ),
+        ));
+    }
+
+    // Histogram label
+    commands.spawn((
+        RutherfordEntity,
+        Text2d::new("Angulo de deflexao (0-180)"),
+        TextFont { font_size: 11.0, ..default() },
+        TextColor(Color::srgba(0.6, 0.8, 0.6, 0.7)),
+        Transform::from_xyz(HISTOGRAM_X + 90.0, HISTOGRAM_Y - 20.0, 10.0),
+    ));
+
+    // Info text
+    commands.spawn((
+        RutherfordEntity,
+        RutherfordInfoText,
+        Text2d::new(""),
+        TextFont { font_size: 13.0, ..default() },
+        TextColor(Color::srgba(0.8, 0.8, 0.6, 0.9)),
+        Transform::from_xyz(300.0, 200.0, 10.0),
+        TextLayout::new_with_justify(Justify::Left),
+    ));
+}
+
+fn cleanup_rutherford(
+    mut commands: Commands,
+    query: Query<Entity, With<RutherfordEntity>>,
+) {
+    for entity in query.iter() {
+        commands.entity(entity).despawn();
+    }
+    commands.remove_resource::<ExperimentConfig>();
+    commands.remove_resource::<DeflectionHistogram>();
+}
+
+// ---------------------------------------------------------------------------
+// Alpha particle scattering — Coulomb repulsion from nucleus
+//
+// Rutherford scattering formula:
+//   dσ/dΩ = (Z₁Z₂e²/(16πε₀E))² · 1/sin⁴(θ/2)
+//
+// Impact parameter vs angle:
+//   b = (a/2)·cot(θ/2)
+//   where a = Z₁Z₂e²/(4πε₀E) = distance of closest approach (head-on)
+//
+// For 5.5 MeV α on Au (Z=79): d_min ~ 41 fm ≈ 10⁻⁴ × atomic radius
+// ---------------------------------------------------------------------------
+
+fn fire_alpha_particles(
+    mut commands: Commands,
+    time: Res<Time>,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<ColorMaterial>>,
+    mut config: Option<ResMut<ExperimentConfig>>,
+) {
+    let Some(ref mut config) = config else { return };
+    if !config.firing { return; }
+
+    let dt = time.delta_secs();
+    config.fire_timer += dt;
+
+    if config.fire_timer > 0.12 {
+        config.fire_timer = 0.0;
+        let mesh = meshes.add(Circle::new(3.5));
+        let mat = materials.add(ColorMaterial::from_color(
+            Color::srgba(1.0, 0.85, 0.2, 0.9),
+        ));
+
+        let mut rng = rand::rng();
+        // Parâmetro de impacto aleatório: distribuição uniforme em b
+        // (como numa folha real, as alfas chegam com b aleatório)
+        let impact_param = rng.random_range(-ATOM_VISUAL_RADIUS..ATOM_VISUAL_RADIUS);
+
+        commands.spawn((
+            RutherfordEntity,
+            AlphaParticle {
+                vel: Vec2::new(-config.alpha_speed, 0.0),
+                trail: Vec::new(),
+            },
+            Mesh2d(mesh),
+            MeshMaterial2d(mat),
+            Transform::from_xyz(ALPHA_SPAWN_X, NUCLEUS_POS.y + impact_param, 3.0),
+        ));
+    }
+}
+
+fn update_alpha_particles(
+    mut commands: Commands,
+    time: Res<Time>,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<ColorMaterial>>,
+    mut histogram: Option<ResMut<DeflectionHistogram>>,
+    mut query: Query<(Entity, &mut AlphaParticle, &mut Transform)>,
+) {
+    let dt = time.delta_secs();
+    let Some(ref mut histogram) = histogram else { return };
+
+    for (entity, mut alpha, mut transform) in query.iter_mut() {
+        let pos = transform.translation.truncate();
+
+        // Força de Coulomb: F = k·Z₁Z₂/(r²) na direção radial (repulsiva)
+        let to_nucleus = NUCLEUS_POS - pos;
+        let dist_sq = to_nucleus.length_squared().max(100.0); // Evitar singularidade
+        let dist = dist_sq.sqrt();
+        let force_dir = to_nucleus / dist;
+
+        // F = -k/r² (repulsivo: alfa e núcleo são ambos positivos)
+        let force_magnitude = -COULOMB_K / dist_sq;
+        let acceleration = force_dir * force_magnitude;
+
+        // Velocity Verlet
+        alpha.vel += acceleration * dt;
+        transform.translation.x += alpha.vel.x * dt;
+        transform.translation.y += alpha.vel.y * dt;
+
+        // Trail (salvar posição a cada N frames)
+        if alpha.trail.len() < 200 {
+            alpha.trail.push(pos);
+        }
+
+        // Detectar se saiu da área
+        let out_of_bounds = transform.translation.x < ALPHA_DESPAWN_X
+            || transform.translation.x > ALPHA_SPAWN_X + 100.0
+            || transform.translation.y.abs() > 400.0;
+
+        if out_of_bounds {
+            // Calcular ângulo de deflexão
+            let initial_dir = Vec2::new(-1.0, 0.0); // Direção inicial (vindo da direita)
+            let final_dir = alpha.vel.normalize_or_zero();
+            let dot = initial_dir.dot(final_dir).clamp(-1.0, 1.0);
+            let angle_rad = dot.acos();
+            let angle_deg = angle_rad.to_degrees();
+
+            // Registrar no histograma
+            let bin = (angle_deg / 10.0).min(17.0) as usize;
+            histogram.bins[bin] += 1;
+            histogram.total += 1;
+            if angle_deg > 90.0 {
+                histogram.backscattered += 1;
+            }
+
+            // Desenhar trail antes de remover
+            let trail_color = if angle_deg > 90.0 {
+                Color::srgba(1.0, 0.2, 0.2, 0.4) // Vermelho para retroespalhadas
+            } else if angle_deg > 30.0 {
+                Color::srgba(1.0, 0.7, 0.2, 0.3) // Laranja para deflexão significativa
+            } else {
+                Color::srgba(0.5, 0.5, 0.5, 0.15) // Cinza para passagem direta
+            };
+
+            // Renderizar trail como segmentos
+            for window in alpha.trail.windows(3) {
+                let mid = (window[0] + window[2]) / 2.0;
+                let dir = window[2] - window[0];
+                let len = dir.length();
+                if len > 1.0 {
+                    let angle = dir.y.atan2(dir.x);
+                    commands.spawn((
+                        RutherfordEntity,
+                        Mesh2d(meshes.add(Rectangle::new(len, 1.0))),
+                        MeshMaterial2d(materials.add(ColorMaterial::from_color(trail_color))),
+                        Transform::from_xyz(mid.x, mid.y, 0.5)
+                            .with_rotation(Quat::from_rotation_z(angle)),
+                    ));
+                }
+            }
+
+            commands.entity(entity).despawn();
+        }
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Classical collapse — Larmor radiation
+//
+// An orbiting electron is an accelerated charge. By Maxwell's
+// electrodynamics, it radiates at rate:
+//   P = e²a²/(6πε₀c³)
+//
+// For electron at Bohr radius: P ~ 4.6×10⁻⁸ W
+// Total energy: E ~ -13.6 eV
+// Collapse time: t ~ 1.6×10⁻¹¹ s = 16 picoseconds
+//
+// The atom should NOT exist. This contradiction is fatal.
+// ---------------------------------------------------------------------------
+
+fn classical_collapse_system(
+    time: Res<Time>,
+    config: Option<Res<ExperimentConfig>>,
+    mut query: Query<(&mut OrbitalElectron, &mut Transform)>,
+) {
+    let Some(config) = config else { return };
+    let dt = time.delta_secs();
+
+    for (mut electron, mut transform) in query.iter_mut() {
+        if config.show_collapse {
+            // Elétron espirala para o núcleo perdendo energia (Larmor radiation)
+            electron.radiating = true;
+            // Taxa de perda de raio proporcional à potência irradiada
+            // Em escala de simulação: raio diminui visivelmente
+            let decay_rate = 30.0; // px/s (acelerado para visualização)
+            electron.radius = (electron.radius - decay_rate * dt).max(NUCLEUS_VISUAL_RADIUS);
+
+            // Frequência orbital aumenta à medida que raio diminui
+            electron.angular_vel = 3.0 * (60.0 / electron.radius.max(5.0));
+        }
+
+        // Atualizar posição orbital
+        electron.angle += electron.angular_vel * dt;
+        transform.translation.x = NUCLEUS_POS.x + electron.angle.cos() * electron.radius;
+        transform.translation.y = NUCLEUS_POS.y + electron.angle.sin() * electron.radius;
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Controls & HUD
+// ---------------------------------------------------------------------------
+
+fn rutherford_controls(
+    keyboard: Res<ButtonInput<KeyCode>>,
+    mut config: Option<ResMut<ExperimentConfig>>,
+) {
+    let Some(ref mut config) = config else { return };
+
+    if keyboard.just_pressed(KeyCode::KeyF) {
+        config.firing = !config.firing;
+    }
+    if keyboard.just_pressed(KeyCode::KeyC) {
+        config.show_collapse = !config.show_collapse;
+    }
+    if keyboard.pressed(KeyCode::ArrowUp) {
+        config.alpha_speed = (config.alpha_speed + 5.0).min(800.0);
+    }
+    if keyboard.pressed(KeyCode::ArrowDown) {
+        config.alpha_speed = (config.alpha_speed - 5.0).max(100.0);
+    }
+}
+
+fn update_rutherford_hud(
+    histogram: Option<Res<DeflectionHistogram>>,
+    config: Option<Res<ExperimentConfig>>,
+    mut info_query: Query<&mut Text2d, With<RutherfordInfoText>>,
+    mut bar_query: Query<(&HistogramBar, &mut Transform), Without<RutherfordInfoText>>,
+) {
+    let Some(histogram) = histogram else { return };
+    let Some(config) = config else { return };
+
+    // Atualizar barras do histograma
+    let max_count = histogram.bins.iter().copied().max().unwrap_or(1).max(1);
+    for (bar, mut transform) in bar_query.iter_mut() {
+        let count = histogram.bins[bar.0];
+        let height = (count as f32 / max_count as f32) * 100.0;
+        transform.scale.y = height.max(1.0);
+        transform.translation.y = HISTOGRAM_Y + height / 2.0;
+    }
+
+    // Atualizar texto
+    let backscatter_pct = if histogram.total > 0 {
+        histogram.backscattered as f32 / histogram.total as f32 * 100.0
+    } else {
+        0.0
+    };
+
+    let collapse_text = if config.show_collapse {
+        "[C] Colapso classico: ATIVO\n\
+         Eletrons espiralam para o nucleo!\n\
+         P = e^2*a^2/(6*pi*eps0*c^3)\n\
+         Tempo de colapso: ~16 picossegundos"
+    } else {
+        "[C] Ativar colapso classico (Larmor)"
+    };
+
+    let info = format!(
+        "EXPERIMENTO DE GEIGER-MARSDEN\n\
+         \u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\n\
+         Alfas disparadas: {}\n\
+         Retroespalhadas (>90): {} ({:.2}%)\n\
+         Real (Geiger-Marsden): ~0.0125%\n\
+         \u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\n\
+         Velocidade alfa: {:.0} [Setas]\n\
+         [F] Toggle disparos\n\n\
+         Formula de Rutherford:\n\
+         ds/dO = (Z1*Z2*e^2/(16*pi*e0*E))^2\n\
+                 * 1/sin^4(t/2)\n\n\
+         Distancia minima (frontal):\n\
+         d_min ~ 41 fm (5.5 MeV, Au)\n\
+         = 10^-4 x raio atomico\n\n\
+         {}\n",
+        histogram.total,
+        histogram.backscattered, backscatter_pct,
+        config.alpha_speed,
+        collapse_text,
+    );
+
+    for mut text in info_query.iter_mut() {
+        *text = Text2d::new(info.clone());
+    }
+}

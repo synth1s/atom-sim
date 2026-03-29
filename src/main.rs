@@ -7,6 +7,7 @@ use common::{ActiveEra, CameraPlugin, SimulationState};
 use eras::democritus::DemocritusPlugin;
 use eras::dalton::DaltonPlugin;
 use eras::thomson::ThomsonPlugin;
+use eras::rutherford::RutherfordPlugin;
 
 fn main() {
     App::new()
@@ -24,5 +25,6 @@ fn main() {
         .add_plugins(DemocritusPlugin)
         .add_plugins(DaltonPlugin)
         .add_plugins(ThomsonPlugin)
+        .add_plugins(RutherfordPlugin)
         .run();
 }

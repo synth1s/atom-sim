@@ -21,6 +21,7 @@ pub enum ActiveEra {
     Democritus,
     Dalton,
     Thomson,
+    Rutherford,
 }
 
 /// Configuração do espaço (arena) onde os átomos se movem.
