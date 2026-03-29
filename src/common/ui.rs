@@ -122,7 +122,9 @@ fn update_controls_hud(
                 [X] Exportar CSV\n\
                 [L] Limitacoes\n\
                 [E] Equacoes\n\
-                [Q] Quiz";
+                [Q] Quiz\n\
+                [P] Parametros\n\
+                [S] Snapshot";
 
     let full = if era_controls.0.is_empty() {
         base.to_string()

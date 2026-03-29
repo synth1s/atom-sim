@@ -4,6 +4,7 @@ use crate::common::{ActiveEra, SimulationState};
 use crate::common::ui::{HudText, EraControls, LimitationText, LimitationVisible};
 use crate::common::equations::{EraEquations, EquationsVisible};
 use crate::common::quiz::{EraQuiz, QuestionData, QuizState};
+use crate::common::sandbox::EraParameters;
 use crate::common::tooltip::Tooltip;
 use crate::common::export::ExportableData;
 
@@ -170,6 +171,11 @@ fn setup_rutherford(
     commands.insert_resource(EraControls(
         "[Setas] Velocidade alfa\n[F] Toggle disparos\n[C] Colapso classico".to_string()
     ));
+
+    commands.insert_resource(EraParameters::from_tuples(&[
+        ("Vel. alfa", 400.0, 100.0, 800.0, 20.0),
+        ("Forca Coulomb", 50000.0, 10000.0, 100000.0, 5000.0),
+    ]));
 
     // Pré-alocar handles para partículas emitidas
     commands.insert_resource(RutherfordParticleAssets {
@@ -348,6 +354,7 @@ fn cleanup_rutherford(
     commands.remove_resource::<LimitationText>();
     commands.remove_resource::<EraEquations>();
     commands.remove_resource::<EraQuiz>();
+    commands.remove_resource::<EraParameters>();
 }
 
 // ---------------------------------------------------------------------------

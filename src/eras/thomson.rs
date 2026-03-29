@@ -6,6 +6,7 @@ use crate::common::{ActiveEra, SimulationState};
 use crate::common::ui::{HudText, EraControls, LimitationText, LimitationVisible};
 use crate::common::equations::{EraEquations, EquationsVisible};
 use crate::common::quiz::{EraQuiz, QuestionData, QuizState};
+use crate::common::sandbox::EraParameters;
 use crate::physics::coulomb;
 
 pub struct ThomsonPlugin;
@@ -169,6 +170,11 @@ fn setup_thomson(
     commands.insert_resource(EraControls(
         "[Setas] Campos E/B\n[F] Toggle feixe\n[A] Teste alfa".to_string()
     ));
+
+    commands.insert_resource(EraParameters::from_tuples(&[
+        ("Campo E", 100.0, 0.0, 300.0, 10.0),
+        ("Campo B", 1.0, 0.0, 10.0, 0.5),
+    ]));
 
     // Limitation text
     commands.insert_resource(LimitationText(
@@ -377,6 +383,7 @@ fn cleanup_thomson(
     commands.remove_resource::<LimitationText>();
     commands.remove_resource::<EraEquations>();
     commands.remove_resource::<EraQuiz>();
+    commands.remove_resource::<EraParameters>();
 }
 
 // ---------------------------------------------------------------------------

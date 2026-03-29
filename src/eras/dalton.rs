@@ -5,6 +5,7 @@ use crate::common::{ActiveEra, Arena, SimulationState};
 use crate::common::ui::{HudText, EraControls, LimitationText, LimitationVisible};
 use crate::common::equations::{EraEquations, EquationsVisible};
 use crate::common::quiz::{EraQuiz, QuestionData, QuizState};
+use crate::common::sandbox::EraParameters;
 use crate::physics::classical::{self, Mass, PhysicsBody, Radius, Velocity};
 
 pub struct DaltonPlugin;
@@ -184,6 +185,10 @@ fn setup_dalton(
     commands.insert_resource(AtomCounts::default());
     commands.insert_resource(EraControls("[E] Trocar elemento\n[Clique] Adicionar atomo".to_string()));
 
+    commands.insert_resource(EraParameters::from_tuples(&[
+        ("Velocidade max", 150.0, 40.0, 400.0, 10.0),
+    ]));
+
     // Limitation text
     commands.insert_resource(LimitationText(
         "ATOMO INDIVISIVEL".to_string(),
@@ -350,6 +355,7 @@ fn cleanup_dalton(
     commands.remove_resource::<LimitationText>();
     commands.remove_resource::<EraEquations>();
     commands.remove_resource::<EraQuiz>();
+    commands.remove_resource::<EraParameters>();
 }
 
 // ---------------------------------------------------------------------------

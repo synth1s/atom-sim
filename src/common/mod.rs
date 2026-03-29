@@ -6,6 +6,8 @@ pub mod timeline;
 pub mod transition;
 pub mod equations;
 pub mod quiz;
+pub mod sandbox;
+pub mod snapshot;
 
 pub use camera::CameraPlugin;
 pub use ui::HudPlugin;
@@ -15,6 +17,8 @@ pub use timeline::TimelinePlugin;
 pub use transition::TransitionPlugin;
 pub use equations::EquationsPlugin;
 pub use quiz::QuizPlugin;
+pub use sandbox::SandboxPlugin;
+pub use snapshot::SnapshotPlugin;
 
 use bevy::prelude::*;
 

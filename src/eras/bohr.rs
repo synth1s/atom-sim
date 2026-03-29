@@ -3,6 +3,7 @@ use crate::common::{ActiveEra, SimulationState};
 use crate::common::ui::{HudText, EraControls, LimitationText, LimitationVisible};
 use crate::common::equations::{EraEquations, EquationsVisible};
 use crate::common::quiz::{EraQuiz, QuestionData, QuizState};
+use crate::common::sandbox::EraParameters;
 use crate::common::tooltip::Tooltip;
 use crate::common::export::ExportableData;
 use crate::physics::spectral;
@@ -146,6 +147,10 @@ fn setup_bohr(
     commands.insert_resource(EraControls(
         "[Setas] Mudar orbita\n[Q,W,R,T,Y] Saltar n=1,2,4,5,6".to_string()
     ));
+
+    commands.insert_resource(EraParameters::from_tuples(&[
+        ("Nivel n", 3.0, 1.0, 6.0, 1.0),
+    ]));
 
     // Pré-alocar handles para partículas emitidas
     commands.insert_resource(BohrParticleAssets {
@@ -313,6 +318,7 @@ fn cleanup_bohr(
     commands.remove_resource::<LimitationText>();
     commands.remove_resource::<EraEquations>();
     commands.remove_resource::<EraQuiz>();
+    commands.remove_resource::<EraParameters>();
 }
 
 // ---------------------------------------------------------------------------

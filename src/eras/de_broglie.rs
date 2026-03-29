@@ -5,6 +5,7 @@ use crate::common::{ActiveEra, SimulationState};
 use crate::common::ui::{HudText, EraControls, LimitationText, LimitationVisible};
 use crate::common::equations::{EraEquations, EquationsVisible};
 use crate::common::quiz::{EraQuiz, QuestionData, QuizState};
+use crate::common::sandbox::EraParameters;
 
 pub struct DeBrogliePlugin;
 
@@ -142,6 +143,10 @@ fn setup_de_broglie(
     commands.insert_resource(EraControls(
         "[Setas] n (0.5 em 0.5)\n[Q,W,R] n=1,2,4  [F] n=2.5\n[D] Fenda dupla".to_string()
     ));
+
+    commands.insert_resource(EraParameters::from_tuples(&[
+        ("n", 3.0, 0.5, 6.0, 0.5),
+    ]));
 
     // Limitation text
     commands.insert_resource(LimitationText(
@@ -324,6 +329,7 @@ fn cleanup_de_broglie(
     commands.remove_resource::<LimitationText>();
     commands.remove_resource::<EraEquations>();
     commands.remove_resource::<EraQuiz>();
+    commands.remove_resource::<EraParameters>();
 }
 
 // ---------------------------------------------------------------------------

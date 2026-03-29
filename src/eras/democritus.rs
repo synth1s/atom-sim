@@ -5,6 +5,7 @@ use crate::common::{ActiveEra, Arena, HudPlugin, SimulationState};
 use crate::common::ui::{HudText, EraControls, LimitationText, LimitationVisible};
 use crate::common::equations::{EraEquations, EquationsVisible};
 use crate::common::quiz::{EraQuiz, QuestionData, QuizState};
+use crate::common::sandbox::EraParameters;
 use crate::physics::classical::{self, Mass, PhysicsBody, Radius, Velocity};
 
 pub struct DemocritusPlugin;
@@ -82,6 +83,11 @@ fn setup_democritus(
     }
 
     commands.insert_resource(EraControls("[Clique] Adicionar atomo".to_string()));
+
+    commands.insert_resource(EraParameters::from_tuples(&[
+        ("Velocidade max", 200.0, 50.0, 500.0, 10.0),
+        ("Raio atomo", 10.0, 5.0, 20.0, 1.0),
+    ]));
 
     // Limitation text
     commands.insert_resource(LimitationText(
@@ -208,6 +214,7 @@ fn cleanup_democritus(
     commands.remove_resource::<LimitationText>();
     commands.remove_resource::<EraEquations>();
     commands.remove_resource::<EraQuiz>();
+    commands.remove_resource::<EraParameters>();
 }
 
 fn spawn_atom_on_click(
