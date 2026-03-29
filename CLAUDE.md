@@ -1,5 +1,18 @@
 # CLAUDE.md — atom-sim
 
+## Inicio de Sessao (OBRIGATORIO)
+
+Ao iniciar qualquer conversa neste projeto, ANTES de executar qualquer tarefa:
+
+1. Ler `team/context/CHANGELOG.md` (o que foi feito por ultimo)
+2. Ler `team/context/DECISIONS.md` (decisoes vigentes)
+3. Apresentar briefing ao proprietario:
+   - **Ultima sessao:** o que foi feito
+   - **Esta sessao:** o que esta planejado (proximas issues do roadmap)
+   - **Decisoes pendentes:** o que precisa da aprovacao dele
+   - **Bloqueios:** se houver
+4. Aguardar aprovacao antes de executar
+
 ## Projeto
 
 Simulacao atomica 2D interativa em Rust/Bevy 0.18 que percorre 9 eras do modelo atomico (Democrito ~400 a.C. a Dirac 1928). Cada commit = marco cientifico. Projeto educacional com rigor academico.

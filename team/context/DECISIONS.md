@@ -36,6 +36,12 @@
 **Decisao:** Apos cada entrega significativa (sprint, correcao, nova feature, nova decisao), o coordenador (Claude principal) DEVE executar o protocolo de sincronizacao definido abaixo.
 **Aplica-se a:** Coordenador (Claude principal) em toda conversa sobre atom-sim.
 
+### D-006: Ponto de encontro no inicio de cada sessao
+**Data:** 2026-03-29
+**Contexto:** Nao havia ritual de alinhamento — trabalho acontecia ad hoc sem visibilidade do que esta planejado.
+**Decisao:** No inicio de cada sessao de trabalho, o coordenador deve apresentar um briefing com: (1) o que foi feito na ultima sessao, (2) o que esta planejado para esta sessao, (3) decisoes pendentes do proprietario, (4) bloqueios. O proprietario aprova ou redireciona antes de iniciar execucao.
+**Aplica-se a:** Coordenador (Claude principal), inicio de toda conversa.
+
 ## Protocolo de Sincronizacao de Memoria
 
 O coordenador e a UNICA ponte entre os dois silos. Apos cada entrega significativa:
@@ -93,3 +99,4 @@ Toda funcao publica em `physics/` deve ter pelo menos 1 teste unitario validando
 | 2026-03-29 | D-004 Dados | Proprietario quer metricas |
 | 2026-03-29 | C-001 a C-007 | Extraidos das avaliacoes SE-001/PH-001/UX-001 |
 | 2026-03-29 | D-005 Sincronizacao | Dois silos de memoria isolados precisam de ponte manual |
+| 2026-03-29 | D-006 Ponto de encontro | Briefing no inicio de cada sessao antes de executar |
