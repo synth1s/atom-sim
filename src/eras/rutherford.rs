@@ -3,6 +3,7 @@ use rand::Rng;
 use crate::common::{ActiveEra, SimulationState};
 use crate::common::ui::{HudText, EraControls, LimitationText, LimitationVisible};
 use crate::common::equations::{EraEquations, EquationsVisible};
+use crate::common::evidence::{EraEvidence, EvidenceVisible};
 use crate::common::quiz::{EraQuiz, QuestionData, QuizState};
 use crate::common::sandbox::EraParameters;
 use crate::common::narrative::{EraNarrative, NarrativeStep};
@@ -208,6 +209,12 @@ fn setup_rutherford(
     ));
     commands.insert_resource(EquationsVisible(false));
 
+    commands.insert_resource(EraEvidence {
+        resolves: "Retroespalhamento: nucleo denso\nds/dO proporcional 1/sin^4(t/2)\nTamanho nuclear: ~10^-15 m".to_string(),
+        fails: "Colapso em ~16 ps (Larmor)\nEspectro continuo previsto\nEstabilidade atomica".to_string(),
+    });
+    commands.insert_resource(EvidenceVisible(false));
+
     commands.insert_resource(EraQuiz(vec![
         QuestionData {
             text: "Por que ~1/8000 alfas retroespalham?".to_string(),
@@ -372,6 +379,7 @@ fn cleanup_rutherford(
     commands.remove_resource::<EraQuiz>();
     commands.remove_resource::<EraParameters>();
     commands.remove_resource::<EraNarrative>();
+    commands.remove_resource::<EraEvidence>();
 }
 
 // ---------------------------------------------------------------------------

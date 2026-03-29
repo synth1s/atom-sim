@@ -127,7 +127,9 @@ fn update_controls_hud(
                 [P] Parametros\n\
                 [S] Snapshot\n\
                 [F5] Auto-Tour\n\
-                [G] Modo Guiado";
+                [G] Modo Guiado\n\
+                [H] Evidencias\n\
+                [N] Quanticos";
 
     let full = if era_controls.0.is_empty() {
         base.to_string()

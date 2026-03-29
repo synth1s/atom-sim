@@ -2,6 +2,7 @@ use bevy::prelude::*;
 use crate::common::{ActiveEra, SimulationState};
 use crate::common::ui::{HudText, EraControls, LimitationText, LimitationVisible};
 use crate::common::equations::{EraEquations, EquationsVisible};
+use crate::common::evidence::{EraEvidence, EvidenceVisible};
 use crate::common::quiz::{EraQuiz, QuestionData, QuizState};
 use crate::common::sandbox::EraParameters;
 use crate::common::narrative::{EraNarrative, NarrativeStep};
@@ -172,6 +173,12 @@ fn setup_bohr(
     ));
     commands.insert_resource(EquationsVisible(false));
 
+    commands.insert_resource(EraEvidence {
+        resolves: "Espectro do H: R_H com 4 casas\nEstabilidade (orbitas sem radiacao)\nEnergia E_n = -13.6/n^2 eV".to_string(),
+        fails: "Helio (E previsto != real)\nEfeito Zeeman anomalo\nEstrutura fina (Michelson 1891)".to_string(),
+    });
+    commands.insert_resource(EvidenceVisible(false));
+
     commands.insert_resource(EraQuiz(vec![
         QuestionData {
             text: "O que emite um foton?".to_string(),
@@ -336,6 +343,7 @@ fn cleanup_bohr(
     commands.remove_resource::<EraQuiz>();
     commands.remove_resource::<EraParameters>();
     commands.remove_resource::<EraNarrative>();
+    commands.remove_resource::<EraEvidence>();
 }
 
 // ---------------------------------------------------------------------------

@@ -5,6 +5,7 @@ use std::f32::consts::TAU;
 use crate::common::{ActiveEra, SimulationState};
 use crate::common::ui::{HudText, EraControls, LimitationText, LimitationVisible};
 use crate::common::equations::{EraEquations, EquationsVisible};
+use crate::common::evidence::{EraEvidence, EvidenceVisible};
 use crate::common::quiz::{EraQuiz, QuestionData, QuizState};
 use crate::common::sandbox::EraParameters;
 use crate::common::narrative::{EraNarrative, NarrativeStep};
@@ -188,6 +189,12 @@ fn setup_thomson(
         "Medicao e/m:\n  v = E/B\n  e/m = 2*y*E / (B^2 * L^2)\n\nOscilacao no pudim:\n  w = sqrt(n_e*e^2 / (3*eps0*m_e*R^3))".to_string(),
     ));
     commands.insert_resource(EquationsVisible(false));
+
+    commands.insert_resource(EraEvidence {
+        resolves: "Eletron universal: e/m = 1.76e11 C/kg\nRaios catodicos independentes do gas\nCarga subatomica".to_string(),
+        fails: "Retroespalhamento alfa (~1/8000)\nEspectros discretos\nTeorema de Earnshaw".to_string(),
+    });
+    commands.insert_resource(EvidenceVisible(false));
 
     commands.insert_resource(EraQuiz(vec![
         QuestionData {
@@ -401,6 +408,7 @@ fn cleanup_thomson(
     commands.remove_resource::<EraQuiz>();
     commands.remove_resource::<EraParameters>();
     commands.remove_resource::<EraNarrative>();
+    commands.remove_resource::<EraEvidence>();
 }
 
 // ---------------------------------------------------------------------------

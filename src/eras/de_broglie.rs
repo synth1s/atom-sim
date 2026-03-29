@@ -4,6 +4,7 @@ use std::f32::consts::TAU;
 use crate::common::{ActiveEra, SimulationState};
 use crate::common::ui::{HudText, EraControls, LimitationText, LimitationVisible};
 use crate::common::equations::{EraEquations, EquationsVisible};
+use crate::common::evidence::{EraEvidence, EvidenceVisible};
 use crate::common::quiz::{EraQuiz, QuestionData, QuizState};
 use crate::common::sandbox::EraParameters;
 use crate::common::narrative::{EraNarrative, NarrativeStep};
@@ -160,6 +161,12 @@ fn setup_de_broglie(
         "Onda de materia:\n  lambda = h/p = h/(m*v)\n\nOnda estacionaria:\n  2*pi*r = n*lambda\n\nDispersao: w = hbar*k^2/(2m)".to_string(),
     ));
     commands.insert_resource(EquationsVisible(false));
+
+    commands.insert_resource(EraEvidence {
+        resolves: "Quantizacao explicada: 2*pi*r = n*lambda\nDavisson-Germer: lambda = 1.67 A\nDualidade onda-particula".to_string(),
+        fails: "Sem equacao de onda\nO que oscila? Qual amplitude?\nPacotes de onda se dispersam".to_string(),
+    });
+    commands.insert_resource(EvidenceVisible(false));
 
     commands.insert_resource(EraQuiz(vec![
         QuestionData {
@@ -347,6 +354,7 @@ fn cleanup_de_broglie(
     commands.remove_resource::<EraQuiz>();
     commands.remove_resource::<EraParameters>();
     commands.remove_resource::<EraNarrative>();
+    commands.remove_resource::<EraEvidence>();
 }
 
 // ---------------------------------------------------------------------------

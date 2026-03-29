@@ -10,6 +10,8 @@ pub mod sandbox;
 pub mod snapshot;
 pub mod auto_tour;
 pub mod narrative;
+pub mod evidence;
+pub mod quantum_explorer;
 
 pub use camera::CameraPlugin;
 pub use ui::HudPlugin;
@@ -23,6 +25,8 @@ pub use sandbox::SandboxPlugin;
 pub use snapshot::SnapshotPlugin;
 pub use auto_tour::AutoTourPlugin;
 pub use narrative::NarrativePlugin;
+pub use evidence::EvidencePlugin;
+pub use quantum_explorer::QuantumExplorerPlugin;
 
 use bevy::prelude::*;
 

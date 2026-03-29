@@ -3,6 +3,7 @@ use bevy::prelude::*;
 use crate::common::{ActiveEra, SimulationState};
 use crate::common::ui::{HudText, EraControls, LimitationText, LimitationVisible};
 use crate::common::equations::{EraEquations, EquationsVisible};
+use crate::common::evidence::{EraEvidence, EvidenceVisible};
 use crate::common::quiz::{EraQuiz, QuestionData, QuizState};
 use crate::common::sandbox::EraParameters;
 use crate::common::narrative::{EraNarrative, NarrativeStep};
@@ -130,6 +131,12 @@ fn setup_schrodinger(
     ));
     commands.insert_resource(EquationsVisible(false));
 
+    commands.insert_resource(EraEvidence {
+        resolves: "Numeros quanticos de condicoes de contorno\nOrbitais s, p, d com formas corretas\nIntensidades via operador dipolo".to_string(),
+        fails: "Nao-relativistico (E=p^2/2m)\nSpin adicionado ad hoc (Pauli)\nNao preve antimateria".to_string(),
+    });
+    commands.insert_resource(EvidenceVisible(false));
+
     commands.insert_resource(EraQuiz(vec![
         QuestionData {
             text: "O que |psi|^2 representa na interpretacao de Born?".to_string(),
@@ -227,6 +234,7 @@ fn cleanup_schrodinger(
     commands.remove_resource::<EraQuiz>();
     commands.remove_resource::<EraParameters>();
     commands.remove_resource::<EraNarrative>();
+    commands.remove_resource::<EraEvidence>();
 }
 
 // ---------------------------------------------------------------------------

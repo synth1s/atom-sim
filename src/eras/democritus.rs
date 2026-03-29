@@ -4,6 +4,7 @@ use rand::Rng;
 use crate::common::{ActiveEra, Arena, HudPlugin, SimulationState};
 use crate::common::ui::{HudText, EraControls, LimitationText, LimitationVisible};
 use crate::common::equations::{EraEquations, EquationsVisible};
+use crate::common::evidence::{EraEvidence, EvidenceVisible};
 use crate::common::quiz::{EraQuiz, QuestionData, QuizState};
 use crate::common::sandbox::EraParameters;
 use crate::common::narrative::{EraNarrative, NarrativeStep};
@@ -101,6 +102,12 @@ fn setup_democritus(
         "Cinematica:\n  p = m * v\n  E_k = (1/2) * m * v^2\n\nColisao elastica:\n  m1*v1 + m2*v2 = m1*v1' + m2*v2'".to_string(),
     ));
     commands.insert_resource(EquationsVisible(false));
+
+    commands.insert_resource(EraEvidence {
+        resolves: "Diversidade aparente da materia\npor forma e arranjo dos atomos".to_string(),
+        fails: "Nenhuma previsao quantitativa\nNao explica proporcoes quimicas\nNao explica eletricidade".to_string(),
+    });
+    commands.insert_resource(EvidenceVisible(false));
 
     commands.insert_resource(EraQuiz(vec![
         QuestionData {
@@ -232,6 +239,7 @@ fn cleanup_democritus(
     commands.remove_resource::<EraQuiz>();
     commands.remove_resource::<EraParameters>();
     commands.remove_resource::<EraNarrative>();
+    commands.remove_resource::<EraEvidence>();
 }
 
 fn spawn_atom_on_click(

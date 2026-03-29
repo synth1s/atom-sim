@@ -4,6 +4,7 @@ use rand::Rng;
 use crate::common::{ActiveEra, SimulationState};
 use crate::common::ui::{HudText, EraControls, LimitationText, LimitationVisible};
 use crate::common::equations::{EraEquations, EquationsVisible};
+use crate::common::evidence::{EraEvidence, EvidenceVisible};
 use crate::common::quiz::{EraQuiz, QuestionData, QuizState};
 use crate::common::sandbox::EraParameters;
 use crate::common::narrative::{EraNarrative, NarrativeStep};
@@ -195,6 +196,12 @@ fn setup_dirac(
         "Eq. de Dirac:\n  (i*gamma^u * d_u - mc/hbar)*psi = 0\n\nSpin: J = L + S, s = 1/2\n\nEstrutura fina exata:\n  E = mc^2*[1+(Za/n')^2]^(-1/2) - mc^2".to_string(),
     ));
     commands.insert_resource(EquationsVisible(false));
+
+    commands.insert_resource(EraEvidence {
+        resolves: "Spin emerge naturalmente (s=1/2)\ng=2 automatico\nPositron previsto (Anderson 1932)".to_string(),
+        fails: "Lamb shift: 2S1/2 != 2P1/2 (+1057 MHz)\nMar de Dirac com energia infinita\nRequer QED para correcoes radiativas".to_string(),
+    });
+    commands.insert_resource(EvidenceVisible(false));
 
     commands.insert_resource(EraQuiz(vec![
         QuestionData {
@@ -420,6 +427,7 @@ fn cleanup_dirac(
     commands.remove_resource::<EraQuiz>();
     commands.remove_resource::<EraParameters>();
     commands.remove_resource::<EraNarrative>();
+    commands.remove_resource::<EraEvidence>();
 }
 
 // ---------------------------------------------------------------------------

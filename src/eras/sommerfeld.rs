@@ -3,6 +3,7 @@ use bevy::prelude::*;
 use crate::common::{ActiveEra, SimulationState};
 use crate::common::ui::{HudText, EraControls, LimitationText, LimitationVisible};
 use crate::common::equations::{EraEquations, EquationsVisible};
+use crate::common::evidence::{EraEvidence, EvidenceVisible};
 use crate::common::quiz::{EraQuiz, QuestionData, QuizState};
 use crate::common::sandbox::EraParameters;
 use crate::common::narrative::{EraNarrative, NarrativeStep};
@@ -178,6 +179,12 @@ fn setup_sommerfeld(
         "Bohr-Sommerfeld:\n  I p_phi dphi = k*h\n  I p_r dr = n_r*h\n\nEstrutura fina:\n  E = E_bohr * [1 + a^2/n^2*(n/k - 3/4)]\n  a = 1/137.036".to_string(),
     ));
     commands.insert_resource(EquationsVisible(false));
+
+    commands.insert_resource(EraEvidence {
+        resolves: "Estrutura fina: alpha = 1/137\nEfeito Zeeman normal (3 linhas)\nOrbitas elipticas".to_string(),
+        fails: "Zeeman anomalo (>3 linhas)\nIntensidades das linhas\nPor que L = n*hbar? (ad hoc)".to_string(),
+    });
+    commands.insert_resource(EvidenceVisible(false));
 
     commands.insert_resource(EraQuiz(vec![
         QuestionData {
@@ -355,6 +362,7 @@ fn cleanup_sommerfeld(
     commands.remove_resource::<EraQuiz>();
     commands.remove_resource::<EraParameters>();
     commands.remove_resource::<EraNarrative>();
+    commands.remove_resource::<EraEvidence>();
 }
 
 // ---------------------------------------------------------------------------

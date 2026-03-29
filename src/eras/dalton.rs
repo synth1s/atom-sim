@@ -4,6 +4,7 @@ use rand::Rng;
 use crate::common::{ActiveEra, Arena, SimulationState};
 use crate::common::ui::{HudText, EraControls, LimitationText, LimitationVisible};
 use crate::common::equations::{EraEquations, EquationsVisible};
+use crate::common::evidence::{EraEvidence, EvidenceVisible};
 use crate::common::quiz::{EraQuiz, QuestionData, QuizState};
 use crate::common::sandbox::EraParameters;
 use crate::common::narrative::{EraNarrative, NarrativeStep};
@@ -202,6 +203,12 @@ fn setup_dalton(
     ));
     commands.insert_resource(EquationsVisible(false));
 
+    commands.insert_resource(EraEvidence {
+        resolves: "Proporcoes definidas (Proust 1799)\nProporcoes multiplas: CO:CO2 = 1:2\nConservacao de massa".to_string(),
+        fails: "Condutividade eletrica\nEspectros de emissao\nTabela periodica (Mendeleev 1869)".to_string(),
+    });
+    commands.insert_resource(EvidenceVisible(false));
+
     commands.insert_resource(EraQuiz(vec![
         QuestionData {
             text: "Qual postulado de Dalton distingue elementos?".to_string(),
@@ -373,6 +380,7 @@ fn cleanup_dalton(
     commands.remove_resource::<EraQuiz>();
     commands.remove_resource::<EraParameters>();
     commands.remove_resource::<EraNarrative>();
+    commands.remove_resource::<EraEvidence>();
 }
 
 // ---------------------------------------------------------------------------
