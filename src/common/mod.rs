@@ -23,6 +23,7 @@ pub enum ActiveEra {
     Thomson,
     Rutherford,
     Bohr,
+    Sommerfeld,
 }
 
 /// Configuração do espaço (arena) onde os átomos se movem.
