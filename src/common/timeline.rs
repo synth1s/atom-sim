@@ -6,8 +6,19 @@ pub struct TimelinePlugin;
 
 impl Plugin for TimelinePlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Startup, spawn_timeline)
-            .add_systems(Update, (update_timeline, timeline_nav));
+        app.insert_resource(ExperimentDescriptions(vec![
+                "Argumento filosofico: materia\nnao pode ser dividida infinitamente".to_string(),
+                "Lei das Proporcoes Multiplas:\nCO tem 1.33g O/g C, CO2 tem 2.67g".to_string(),
+                "Tubo de raios catodicos:\ne/m = 1.759e11 C/kg".to_string(),
+                "Folha de ouro: 1/8000 alfas\nretroespalhadas a >90 graus".to_string(),
+                "Espectro do H: formula de Rydberg\ncom 4 casas de precisao".to_string(),
+                "Interferometro de Michelson:\nH-alfa e um dupleto (~0.14 cm^-1)".to_string(),
+                "Davisson-Germer (1927):\nlambda = 1.65 A (previsto: 1.67 A)".to_string(),
+                "Eq. de onda: numeros quanticos\nemergem das condicoes de contorno".to_string(),
+                "Anderson (1932): positron em\nraios cosmicos confirma previsao".to_string(),
+            ]))
+            .add_systems(Startup, spawn_timeline)
+            .add_systems(Update, (update_timeline, timeline_nav, experiment_hover));
     }
 }
 
@@ -22,6 +33,14 @@ struct TimelineItem(usize);
 /// Marker for the highlight text of a timeline item.
 #[derive(Component)]
 struct TimelineHighlight(usize);
+
+/// Marker for the experiment description panel (hover popup).
+#[derive(Component)]
+struct ExperimentPanel;
+
+/// Resource holding a short experiment description for each era (0-8).
+#[derive(Resource)]
+struct ExperimentDescriptions(Vec<String>);
 
 const ERA_LABELS: [&str; 9] = [
     "1:Democrito",
@@ -173,5 +192,72 @@ fn timeline_nav(
         transition.timer = 0.0;
         transition.phase = TransitionPhase::FadeOut;
         transition.target_era = era;
+    }
+}
+
+fn experiment_hover(
+    mut commands: Commands,
+    windows: Query<&Window>,
+    camera_query: Query<(&Camera, &GlobalTransform), With<Camera2d>>,
+    timeline_items: Query<(&TimelineItem, &GlobalTransform), Without<ExperimentPanel>>,
+    existing_panels: Query<Entity, With<ExperimentPanel>>,
+    descriptions: Res<ExperimentDescriptions>,
+) {
+    // Despawn existing panels first
+    for entity in existing_panels.iter() {
+        commands.entity(entity).despawn();
+    }
+
+    let Ok(window) = windows.single() else { return };
+    let Some(cursor_pos) = window.cursor_position() else { return };
+    let Ok((camera, camera_transform)) = camera_query.single() else { return };
+    let Ok(ray) = camera.viewport_to_world(camera_transform, cursor_pos) else { return };
+    let world_pos = ray.origin.truncate();
+
+    // Find which timeline item the cursor is hovering over (within 30px)
+    let mut hovered: Option<(usize, Vec2)> = None;
+    for (item, global_transform) in timeline_items.iter() {
+        let item_pos = global_transform.translation().truncate();
+        let dx = (world_pos.x - item_pos.x).abs();
+        let dy = (world_pos.y - item_pos.y).abs();
+        // Check within the rectangle bounds (half-width, half-height) + a margin
+        if dx < ITEM_WIDTH / 2.0 + 5.0 && dy < ITEM_HEIGHT / 2.0 + 5.0 {
+            let dist = world_pos.distance(item_pos);
+            if dist < 80.0 {
+                if hovered.is_none() || dist < world_pos.distance(hovered.unwrap().1) {
+                    hovered = Some((item.0, item_pos));
+                }
+            }
+        }
+    }
+
+    if let Some((index, pos)) = hovered {
+        if index < descriptions.0.len() {
+            let desc = &descriptions.0[index];
+
+            // Dark background
+            commands.spawn((
+                ExperimentPanel,
+                Sprite {
+                    color: Color::srgba(0.08, 0.08, 0.12, 0.92),
+                    custom_size: Some(Vec2::new(250.0, 50.0)),
+                    ..default()
+                },
+                Transform::from_xyz(pos.x, pos.y + 45.0, 55.0),
+            ));
+
+            // Description text
+            commands.spawn((
+                ExperimentPanel,
+                Text2d::new(desc.clone()),
+                TextFont {
+                    font_size: 11.0,
+                    ..default()
+                },
+                TextColor(Color::srgba(0.9, 0.92, 0.8, 0.95)),
+                Transform::from_xyz(pos.x, pos.y + 45.0, 56.0),
+                bevy::text::TextLayout::new_with_justify(bevy::text::Justify::Center),
+            ));
+        }
     }
 }

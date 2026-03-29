@@ -2,6 +2,8 @@ use bevy::prelude::*;
 
 use crate::common::{ActiveEra, SimulationState};
 use crate::common::ui::{HudText, EraControls, LimitationText, LimitationVisible};
+use crate::common::equations::{EraEquations, EquationsVisible};
+use crate::common::quiz::{EraQuiz, QuestionData, QuizState};
 use crate::common::tooltip::Tooltip;
 use crate::common::export::ExportableData;
 use crate::physics::{quantum, spectral};
@@ -116,6 +118,45 @@ fn setup_schrodinger(
     ));
     commands.insert_resource(LimitationVisible(false));
 
+    commands.insert_resource(EraEquations(
+        "Eq. de Schrodinger:\n  ih*dpsi/dt = [-h^2/(2m)*nabla^2 + V]*psi\n\nSolucao H:\n  psi_nlm = R_nl(r) * Y_lm(t,f)\n\nBorn: |psi|^2 = probabilidade".to_string(),
+    ));
+    commands.insert_resource(EquationsVisible(false));
+
+    commands.insert_resource(EraQuiz(vec![
+        QuestionData {
+            text: "O que |psi|^2 representa na interpretacao de Born?".to_string(),
+            options: vec![
+                "Energia da particula".to_string(),
+                "Densidade de probabilidade de posicao".to_string(),
+                "Carga eletrica distribuida".to_string(),
+                "Frequencia de onda".to_string(),
+            ],
+            correct: 1,
+        },
+        QuestionData {
+            text: "De onde vem os numeros quanticos n,l,m em Schrodinger?".to_string(),
+            options: vec![
+                "Postulados arbitrarios".to_string(),
+                "Dados experimentais".to_string(),
+                "Condicoes de contorno da eq. de onda".to_string(),
+                "Principio de incerteza".to_string(),
+            ],
+            correct: 2,
+        },
+        QuestionData {
+            text: "Qual a principal limitacao da eq. de Schrodinger?".to_string(),
+            options: vec![
+                "Nao funciona para H".to_string(),
+                "E nao-relativistica (v << c)".to_string(),
+                "Nao tem solucao analitica".to_string(),
+                "Ignora interacoes nucleares".to_string(),
+            ],
+            correct: 1,
+        },
+    ]));
+    commands.insert_resource(QuizState::default());
+
     // Núcleo
     commands.spawn((
         SchrodingerEntity,
@@ -160,6 +201,8 @@ fn cleanup_schrodinger(
     }
     commands.remove_resource::<SchrodingerState>();
     commands.remove_resource::<LimitationText>();
+    commands.remove_resource::<EraEquations>();
+    commands.remove_resource::<EraQuiz>();
 }
 
 // ---------------------------------------------------------------------------

@@ -3,6 +3,8 @@ use rand::Rng;
 
 use crate::common::{ActiveEra, SimulationState};
 use crate::common::ui::{HudText, EraControls, LimitationText, LimitationVisible};
+use crate::common::equations::{EraEquations, EquationsVisible};
+use crate::common::quiz::{EraQuiz, QuestionData, QuizState};
 use crate::common::export::ExportableData;
 use crate::physics::spectral;
 
@@ -183,6 +185,45 @@ fn setup_dirac(
     ));
     commands.insert_resource(LimitationVisible(false));
 
+    commands.insert_resource(EraEquations(
+        "Eq. de Dirac:\n  (i*gamma^u * d_u - mc/hbar)*psi = 0\n\nSpin: J = L + S, s = 1/2\n\nEstrutura fina exata:\n  E = mc^2*[1+(Za/n')^2]^(-1/2) - mc^2".to_string(),
+    ));
+    commands.insert_resource(EquationsVisible(false));
+
+    commands.insert_resource(EraQuiz(vec![
+        QuestionData {
+            text: "O que emerge NATURALMENTE da equacao de Dirac?".to_string(),
+            options: vec![
+                "Massa do eletron".to_string(),
+                "Spin 1/2 e fator g=2".to_string(),
+                "Numeros quanticos n,l,m".to_string(),
+                "Constante de Planck".to_string(),
+            ],
+            correct: 1,
+        },
+        QuestionData {
+            text: "O que as solucoes de energia negativa previram?".to_string(),
+            options: vec![
+                "Neutrinos".to_string(),
+                "Neutrons".to_string(),
+                "Positrons (antimateria)".to_string(),
+                "Quarks".to_string(),
+            ],
+            correct: 2,
+        },
+        QuestionData {
+            text: "Quem descobriu o positron e quando?".to_string(),
+            options: vec![
+                "Rutherford, 1911".to_string(),
+                "Bohr, 1920".to_string(),
+                "Anderson, 1932 (raios cosmicos)".to_string(),
+                "Feynman, 1948".to_string(),
+            ],
+            correct: 2,
+        },
+    ]));
+    commands.insert_resource(QuizState::default());
+
     // Pré-alocar handles para partículas emitidas
     commands.insert_resource(DiracParticleAssets {
         electron_mesh: meshes.add(Circle::new(6.0)),
@@ -354,6 +395,8 @@ fn cleanup_dirac(
     commands.remove_resource::<DiracState>();
     commands.remove_resource::<DiracParticleAssets>();
     commands.remove_resource::<LimitationText>();
+    commands.remove_resource::<EraEquations>();
+    commands.remove_resource::<EraQuiz>();
 }
 
 // ---------------------------------------------------------------------------

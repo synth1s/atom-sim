@@ -2,6 +2,8 @@ use bevy::prelude::*;
 
 use crate::common::{ActiveEra, SimulationState};
 use crate::common::ui::{HudText, EraControls, LimitationText, LimitationVisible};
+use crate::common::equations::{EraEquations, EquationsVisible};
+use crate::common::quiz::{EraQuiz, QuestionData, QuizState};
 use crate::physics::spectral;
 
 pub struct SommerfeldPlugin;
@@ -164,6 +166,45 @@ fn setup_sommerfeld(
     ));
     commands.insert_resource(LimitationVisible(false));
 
+    commands.insert_resource(EraEquations(
+        "Bohr-Sommerfeld:\n  I p_phi dphi = k*h\n  I p_r dr = n_r*h\n\nEstrutura fina:\n  E = E_bohr * [1 + a^2/n^2*(n/k - 3/4)]\n  a = 1/137.036".to_string(),
+    ));
+    commands.insert_resource(EquationsVisible(false));
+
+    commands.insert_resource(EraQuiz(vec![
+        QuestionData {
+            text: "O que a constante de estrutura fina (alfa) vale?".to_string(),
+            options: vec![
+                "1/137.036".to_string(),
+                "1/299792".to_string(),
+                "6.626e-34".to_string(),
+                "1.602e-19".to_string(),
+            ],
+            correct: 0,
+        },
+        QuestionData {
+            text: "Qual numero quantico Sommerfeld adicionou?".to_string(),
+            options: vec![
+                "Spin (s)".to_string(),
+                "Azimutal (k) para orbitas elipticas".to_string(),
+                "Paridade (P)".to_string(),
+                "Isospin (I)".to_string(),
+            ],
+            correct: 1,
+        },
+        QuestionData {
+            text: "Por que a estrutura fina de Sommerfeld da certo 'por acidente'?".to_string(),
+            options: vec![
+                "Usou dados experimentais errados".to_string(),
+                "Coincidencia: correcao relativistica imita efeito de spin".to_string(),
+                "So funciona para Hidrogenio".to_string(),
+                "Erro numerico se cancela".to_string(),
+            ],
+            correct: 1,
+        },
+    ]));
+    commands.insert_resource(QuizState::default());
+
     // Núcleo
     commands.spawn((
         SommerfeldEntity,
@@ -287,6 +328,8 @@ fn cleanup_sommerfeld(
     }
     commands.remove_resource::<SommerfeldState>();
     commands.remove_resource::<LimitationText>();
+    commands.remove_resource::<EraEquations>();
+    commands.remove_resource::<EraQuiz>();
 }
 
 // ---------------------------------------------------------------------------

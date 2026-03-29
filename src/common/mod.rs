@@ -4,6 +4,8 @@ pub mod tooltip;
 pub mod export;
 pub mod timeline;
 pub mod transition;
+pub mod equations;
+pub mod quiz;
 
 pub use camera::CameraPlugin;
 pub use ui::HudPlugin;
@@ -11,6 +13,8 @@ pub use tooltip::TooltipPlugin;
 pub use export::ExportPlugin;
 pub use timeline::TimelinePlugin;
 pub use transition::TransitionPlugin;
+pub use equations::EquationsPlugin;
+pub use quiz::QuizPlugin;
 
 use bevy::prelude::*;
 

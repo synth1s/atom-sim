@@ -4,6 +4,8 @@ use std::f32::consts::TAU;
 
 use crate::common::{ActiveEra, SimulationState};
 use crate::common::ui::{HudText, EraControls, LimitationText, LimitationVisible};
+use crate::common::equations::{EraEquations, EquationsVisible};
+use crate::common::quiz::{EraQuiz, QuestionData, QuizState};
 use crate::physics::coulomb;
 
 pub struct ThomsonPlugin;
@@ -175,6 +177,45 @@ fn setup_thomson(
     ));
     commands.insert_resource(LimitationVisible(false));
 
+    commands.insert_resource(EraEquations(
+        "Medicao e/m:\n  v = E/B\n  e/m = 2*y*E / (B^2 * L^2)\n\nOscilacao no pudim:\n  w = sqrt(n_e*e^2 / (3*eps0*m_e*R^3))".to_string(),
+    ));
+    commands.insert_resource(EquationsVisible(false));
+
+    commands.insert_resource(EraQuiz(vec![
+        QuestionData {
+            text: "Como Thomson mediu e/m do eletron?".to_string(),
+            options: vec![
+                "Pesando atomos em balanca".to_string(),
+                "Cruzando campos E e B no tubo catodico".to_string(),
+                "Contando centelhas em tela".to_string(),
+                "Medindo temperatura do gas".to_string(),
+            ],
+            correct: 1,
+        },
+        QuestionData {
+            text: "Qual o modelo atomico de Thomson?".to_string(),
+            options: vec![
+                "Nucleo denso com eletrons orbitando".to_string(),
+                "Esfera positiva com eletrons embutidos (pudim)".to_string(),
+                "Onda de probabilidade".to_string(),
+                "Esferas solidas identicas".to_string(),
+            ],
+            correct: 1,
+        },
+        QuestionData {
+            text: "O que o valor e/m = 1.76e11 C/kg revelou?".to_string(),
+            options: vec![
+                "O atomo e eletricamente neutro".to_string(),
+                "Particula ~1836x mais leve que H: subestrutura atomica".to_string(),
+                "A luz e uma onda".to_string(),
+                "O nucleo e positivo".to_string(),
+            ],
+            correct: 1,
+        },
+    ]));
+    commands.insert_resource(QuizState::default());
+
     // Pré-alocar handles para partículas emitidas
     commands.insert_resource(ThomsonParticleAssets {
         cathode_mesh: meshes.add(Circle::new(3.0)),
@@ -334,6 +375,8 @@ fn cleanup_thomson(
     commands.remove_resource::<AlphaTestState>();
     commands.remove_resource::<ThomsonParticleAssets>();
     commands.remove_resource::<LimitationText>();
+    commands.remove_resource::<EraEquations>();
+    commands.remove_resource::<EraQuiz>();
 }
 
 // ---------------------------------------------------------------------------

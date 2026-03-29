@@ -3,6 +3,8 @@ use std::f32::consts::TAU;
 
 use crate::common::{ActiveEra, SimulationState};
 use crate::common::ui::{HudText, EraControls, LimitationText, LimitationVisible};
+use crate::common::equations::{EraEquations, EquationsVisible};
+use crate::common::quiz::{EraQuiz, QuestionData, QuizState};
 
 pub struct DeBrogliePlugin;
 
@@ -148,6 +150,45 @@ fn setup_de_broglie(
     ));
     commands.insert_resource(LimitationVisible(false));
 
+    commands.insert_resource(EraEquations(
+        "Onda de materia:\n  lambda = h/p = h/(m*v)\n\nOnda estacionaria:\n  2*pi*r = n*lambda\n\nDispersao: w = hbar*k^2/(2m)".to_string(),
+    ));
+    commands.insert_resource(EquationsVisible(false));
+
+    commands.insert_resource(EraQuiz(vec![
+        QuestionData {
+            text: "Qual a relacao de de Broglie?".to_string(),
+            options: vec![
+                "E = mc^2".to_string(),
+                "lambda = h/p".to_string(),
+                "F = ma".to_string(),
+                "E = hv (Planck)".to_string(),
+            ],
+            correct: 1,
+        },
+        QuestionData {
+            text: "O que Davisson-Germer confirmou em 1927?".to_string(),
+            options: vec![
+                "Eletrons tem massa".to_string(),
+                "Difracao de eletrons: particulas tem propriedade de onda".to_string(),
+                "Fotons tem massa".to_string(),
+                "Nucleo e composto de protons".to_string(),
+            ],
+            correct: 1,
+        },
+        QuestionData {
+            text: "Como de Broglie reinterpretou a quantizacao de Bohr?".to_string(),
+            options: vec![
+                "Eletrons saltam aleatoriamente".to_string(),
+                "Orbitas sao elipticas".to_string(),
+                "Onda estacionaria: 2*pi*r = n*lambda".to_string(),
+                "Eletrons sao particulas puntuais".to_string(),
+            ],
+            correct: 2,
+        },
+    ]));
+    commands.insert_resource(QuizState::default());
+
     // Pré-alocar handles para partículas da fenda dupla
     commands.insert_resource(DeBroglieParticleAssets {
         slit_particle_mesh: meshes.add(Circle::new(2.0)),
@@ -281,6 +322,8 @@ fn cleanup_de_broglie(
     commands.remove_resource::<DeBroglieState>();
     commands.remove_resource::<DeBroglieParticleAssets>();
     commands.remove_resource::<LimitationText>();
+    commands.remove_resource::<EraEquations>();
+    commands.remove_resource::<EraQuiz>();
 }
 
 // ---------------------------------------------------------------------------

@@ -2,6 +2,8 @@ use bevy::prelude::*;
 use rand::Rng;
 use crate::common::{ActiveEra, SimulationState};
 use crate::common::ui::{HudText, EraControls, LimitationText, LimitationVisible};
+use crate::common::equations::{EraEquations, EquationsVisible};
+use crate::common::quiz::{EraQuiz, QuestionData, QuizState};
 use crate::common::tooltip::Tooltip;
 use crate::common::export::ExportableData;
 
@@ -194,6 +196,45 @@ fn setup_rutherford(
     ));
     commands.insert_resource(LimitationVisible(false));
 
+    commands.insert_resource(EraEquations(
+        "Espalhamento Coulomb:\n  ds/dO = (Z1*Z2*e^2/(16*pi*e0*E))^2\n         * 1/sin^4(t/2)\n\nRadiacao de Larmor:\n  P = e^2*a^2 / (6*pi*eps0*c^3)".to_string(),
+    ));
+    commands.insert_resource(EquationsVisible(false));
+
+    commands.insert_resource(EraQuiz(vec![
+        QuestionData {
+            text: "Por que ~1/8000 alfas retroespalham?".to_string(),
+            options: vec![
+                "Eletrons as repelem".to_string(),
+                "Nucleo denso e positivo".to_string(),
+                "Campo magnetico".to_string(),
+                "Folha muito espessa".to_string(),
+            ],
+            correct: 1,
+        },
+        QuestionData {
+            text: "Qual o tamanho do nucleo vs atomo?".to_string(),
+            options: vec![
+                "Metade do atomo".to_string(),
+                "1/10 do atomo".to_string(),
+                "~10^-5 do atomo (1 fm vs 0.1 nm)".to_string(),
+                "Mesmo tamanho".to_string(),
+            ],
+            correct: 2,
+        },
+        QuestionData {
+            text: "Qual o paradoxo classico deste modelo?".to_string(),
+            options: vec![
+                "Eletrons nao existem".to_string(),
+                "Nucleo deveria se desintegrar".to_string(),
+                "Eletron irradiaria e colapsaria em ~16 ps".to_string(),
+                "Atomos deveriam ser transparentes".to_string(),
+            ],
+            correct: 2,
+        },
+    ]));
+    commands.insert_resource(QuizState::default());
+
     // Núcleo — ponto vermelho minúsculo
     commands.spawn((
         RutherfordEntity,
@@ -305,6 +346,8 @@ fn cleanup_rutherford(
     commands.remove_resource::<DeflectionHistogram>();
     commands.remove_resource::<RutherfordParticleAssets>();
     commands.remove_resource::<LimitationText>();
+    commands.remove_resource::<EraEquations>();
+    commands.remove_resource::<EraQuiz>();
 }
 
 // ---------------------------------------------------------------------------

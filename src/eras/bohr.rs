@@ -1,6 +1,8 @@
 use bevy::prelude::*;
 use crate::common::{ActiveEra, SimulationState};
 use crate::common::ui::{HudText, EraControls, LimitationText, LimitationVisible};
+use crate::common::equations::{EraEquations, EquationsVisible};
+use crate::common::quiz::{EraQuiz, QuestionData, QuizState};
 use crate::common::tooltip::Tooltip;
 use crate::common::export::ExportableData;
 use crate::physics::spectral;
@@ -159,6 +161,45 @@ fn setup_bohr(
     ));
     commands.insert_resource(LimitationVisible(false));
 
+    commands.insert_resource(EraEquations(
+        "Quantizacao: L = n*hbar\n\nRaio: r_n = n^2 * a0\n  a0 = 0.529 A\n\nEnergia: E_n = -13.6/n^2 eV\n\nRydberg: R_H = 1.0974e7 m^-1".to_string(),
+    ));
+    commands.insert_resource(EquationsVisible(false));
+
+    commands.insert_resource(EraQuiz(vec![
+        QuestionData {
+            text: "O que emite um foton?".to_string(),
+            options: vec![
+                "Nucleo vibra".to_string(),
+                "Eletron sobe orbita".to_string(),
+                "Eletron desce orbita".to_string(),
+                "Colisao atomica".to_string(),
+            ],
+            correct: 2,
+        },
+        QuestionData {
+            text: "O que quantiza o momento angular no modelo de Bohr?".to_string(),
+            options: vec![
+                "L = n*hbar (multiplos inteiros de hbar)".to_string(),
+                "L = n*h (multiplos de h)".to_string(),
+                "L pode ter qualquer valor".to_string(),
+                "L depende da temperatura".to_string(),
+            ],
+            correct: 0,
+        },
+        QuestionData {
+            text: "Qual a energia do nivel n=2 do Hidrogenio?".to_string(),
+            options: vec![
+                "-13.6 eV".to_string(),
+                "-3.4 eV".to_string(),
+                "-1.51 eV".to_string(),
+                "-0.85 eV".to_string(),
+            ],
+            correct: 1,
+        },
+    ]));
+    commands.insert_resource(QuizState::default());
+
     // Núcleo
     commands.spawn((
         BohrEntity,
@@ -270,6 +311,8 @@ fn cleanup_bohr(
     commands.remove_resource::<BohrState>();
     commands.remove_resource::<BohrParticleAssets>();
     commands.remove_resource::<LimitationText>();
+    commands.remove_resource::<EraEquations>();
+    commands.remove_resource::<EraQuiz>();
 }
 
 // ---------------------------------------------------------------------------

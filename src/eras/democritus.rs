@@ -3,6 +3,8 @@ use rand::Rng;
 
 use crate::common::{ActiveEra, Arena, HudPlugin, SimulationState};
 use crate::common::ui::{HudText, EraControls, LimitationText, LimitationVisible};
+use crate::common::equations::{EraEquations, EquationsVisible};
+use crate::common::quiz::{EraQuiz, QuestionData, QuizState};
 use crate::physics::classical::{self, Mass, PhysicsBody, Radius, Velocity};
 
 pub struct DemocritusPlugin;
@@ -88,6 +90,45 @@ fn setup_democritus(
     ));
     commands.insert_resource(LimitationVisible(false));
 
+    commands.insert_resource(EraEquations(
+        "Cinematica:\n  p = m * v\n  E_k = (1/2) * m * v^2\n\nColisao elastica:\n  m1*v1 + m2*v2 = m1*v1' + m2*v2'".to_string(),
+    ));
+    commands.insert_resource(EquationsVisible(false));
+
+    commands.insert_resource(EraQuiz(vec![
+        QuestionData {
+            text: "O que diferencia atomos neste modelo?".to_string(),
+            options: vec![
+                "Massa".to_string(),
+                "Carga".to_string(),
+                "Forma e arranjo".to_string(),
+                "Cor".to_string(),
+            ],
+            correct: 2,
+        },
+        QuestionData {
+            text: "Por que Democrito diz que atomos sao indivisiveis?".to_string(),
+            options: vec![
+                "Experimento com martelo".to_string(),
+                "Argumento logico: divisao infinita e absurda".to_string(),
+                "Observacao ao microscopio".to_string(),
+                "Medicao de massa".to_string(),
+            ],
+            correct: 1,
+        },
+        QuestionData {
+            text: "No modelo de Democrito, o que existe entre atomos?".to_string(),
+            options: vec![
+                "Eter luminifero".to_string(),
+                "Ar comprimido".to_string(),
+                "Vazio (kenon)".to_string(),
+                "Fluido continuo".to_string(),
+            ],
+            correct: 2,
+        },
+    ]));
+    commands.insert_resource(QuizState::default());
+
     // Arena walls
     let wall_color = Color::srgba(0.3, 0.3, 0.35, 0.6);
     let thickness = 2.0;
@@ -165,6 +206,8 @@ fn cleanup_democritus(
     commands.remove_resource::<AtomAssets>();
     commands.remove_resource::<AtomCount>();
     commands.remove_resource::<LimitationText>();
+    commands.remove_resource::<EraEquations>();
+    commands.remove_resource::<EraQuiz>();
 }
 
 fn spawn_atom_on_click(

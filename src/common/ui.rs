@@ -120,7 +120,9 @@ fn update_controls_hud(
                 [1-9] Trocar era\n\
                 [[ ]] Era anterior/proxima\n\
                 [X] Exportar CSV\n\
-                [L] Limitacoes";
+                [L] Limitacoes\n\
+                [E] Equacoes\n\
+                [Q] Quiz";
 
     let full = if era_controls.0.is_empty() {
         base.to_string()

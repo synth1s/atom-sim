@@ -3,6 +3,8 @@ use rand::Rng;
 
 use crate::common::{ActiveEra, Arena, SimulationState};
 use crate::common::ui::{HudText, EraControls, LimitationText, LimitationVisible};
+use crate::common::equations::{EraEquations, EquationsVisible};
+use crate::common::quiz::{EraQuiz, QuestionData, QuizState};
 use crate::physics::classical::{self, Mass, PhysicsBody, Radius, Velocity};
 
 pub struct DaltonPlugin;
@@ -189,6 +191,45 @@ fn setup_dalton(
     ));
     commands.insert_resource(LimitationVisible(false));
 
+    commands.insert_resource(EraEquations(
+        "Conservacao de massa:\n  sum(m_reagentes) = sum(m_produtos)\n\nPeso molecular:\n  M = sum(n_i * A_i)\n\nProporcoes multiplas:\n  m_O/m_C em CO:CO2 = 1:2".to_string(),
+    ));
+    commands.insert_resource(EquationsVisible(false));
+
+    commands.insert_resource(EraQuiz(vec![
+        QuestionData {
+            text: "Qual postulado de Dalton distingue elementos?".to_string(),
+            options: vec![
+                "Atomos tem cores diferentes".to_string(),
+                "Atomos de elementos diferentes tem massas diferentes".to_string(),
+                "Atomos tem cargas diferentes".to_string(),
+                "Atomos tem formas diferentes".to_string(),
+            ],
+            correct: 1,
+        },
+        QuestionData {
+            text: "O que a Lei das Proporcoes Multiplas afirma?".to_string(),
+            options: vec![
+                "Massas sao sempre iguais".to_string(),
+                "Razoes de massa sao inteiros pequenos".to_string(),
+                "Volumes sao proporcionais".to_string(),
+                "Temperaturas determinam proporcoes".to_string(),
+            ],
+            correct: 1,
+        },
+        QuestionData {
+            text: "Qual limitacao principal do modelo de Dalton?".to_string(),
+            options: vec![
+                "Nao explica gravidade".to_string(),
+                "Atomos sao indivisiveis (ignora eletrons)".to_string(),
+                "Nao tem matematica".to_string(),
+                "So funciona para gases".to_string(),
+            ],
+            correct: 1,
+        },
+    ]));
+    commands.insert_resource(QuizState::default());
+
     // Arena walls
     let wall_color = Color::srgba(0.3, 0.3, 0.35, 0.6);
     let thickness = 2.0;
@@ -307,6 +348,8 @@ fn cleanup_dalton(
     commands.remove_resource::<AtomCounts>();
     commands.remove_resource::<DaltonParticleAssets>();
     commands.remove_resource::<LimitationText>();
+    commands.remove_resource::<EraEquations>();
+    commands.remove_resource::<EraQuiz>();
 }
 
 // ---------------------------------------------------------------------------
