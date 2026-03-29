@@ -12,6 +12,7 @@ pub mod auto_tour;
 pub mod narrative;
 pub mod evidence;
 pub mod quantum_explorer;
+pub mod predict;
 
 pub use camera::CameraPlugin;
 pub use ui::HudPlugin;
@@ -27,6 +28,7 @@ pub use auto_tour::AutoTourPlugin;
 pub use narrative::NarrativePlugin;
 pub use evidence::EvidencePlugin;
 pub use quantum_explorer::QuantumExplorerPlugin;
+pub use predict::PredictPlugin;
 
 use bevy::prelude::*;
 

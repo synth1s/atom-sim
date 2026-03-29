@@ -5,6 +5,7 @@ use crate::common::ui::{HudText, EraControls, LimitationText, LimitationVisible}
 use crate::common::equations::{EraEquations, EquationsVisible};
 use crate::common::evidence::{EraEvidence, EvidenceVisible};
 use crate::common::quiz::{EraQuiz, QuestionData, QuizState};
+use crate::common::predict::{EraPredictions, Prediction, PredictState};
 use crate::common::sandbox::EraParameters;
 use crate::common::narrative::{EraNarrative, NarrativeStep};
 use crate::common::tooltip::Tooltip;
@@ -249,6 +250,32 @@ fn setup_rutherford(
     ]));
     commands.insert_resource(QuizState::default());
 
+    commands.insert_resource(EraPredictions(vec![
+        Prediction {
+            question: "Se dispararmos alfa a 45 graus do nucleo,\no angulo de saida sera:".to_string(),
+            options: vec![
+                "~45 graus".to_string(),
+                "~90 graus".to_string(),
+                "~135 graus".to_string(),
+                "Depende da distancia ao nucleo".to_string(),
+            ],
+            correct: 3,
+            explanation: "O espalhamento Coulombiano depende do\nparametro de impacto b, nao do angulo incidente.".to_string(),
+        },
+        Prediction {
+            question: "Se substituirmos ouro (Z=79) por aluminio\n(Z=13), os retroespalhamentos vao:".to_string(),
+            options: vec![
+                "Aumentar".to_string(),
+                "Diminuir muito".to_string(),
+                "Ficar iguais".to_string(),
+                "Desaparecer completamente".to_string(),
+            ],
+            correct: 1,
+            explanation: "sigma ~ Z^2. Aluminio tem Z=13 vs Au Z=79.\nRetroespalhamento cai por fator ~(13/79)^2 = ~2.7%.".to_string(),
+        },
+    ]));
+    commands.insert_resource(PredictState::default());
+
     commands.insert_resource(EraNarrative(vec![
         NarrativeStep {
             text: "Observe: alfas sendo disparadas contra folha de ouro (Au Z=79).".to_string(),
@@ -377,6 +404,7 @@ fn cleanup_rutherford(
     commands.remove_resource::<LimitationText>();
     commands.remove_resource::<EraEquations>();
     commands.remove_resource::<EraQuiz>();
+    commands.remove_resource::<EraPredictions>();
     commands.remove_resource::<EraParameters>();
     commands.remove_resource::<EraNarrative>();
     commands.remove_resource::<EraEvidence>();

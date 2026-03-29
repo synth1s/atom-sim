@@ -6,6 +6,7 @@ use crate::common::ui::{HudText, EraControls, LimitationText, LimitationVisible}
 use crate::common::equations::{EraEquations, EquationsVisible};
 use crate::common::evidence::{EraEvidence, EvidenceVisible};
 use crate::common::quiz::{EraQuiz, QuestionData, QuizState};
+use crate::common::predict::{EraPredictions, Prediction, PredictState};
 use crate::common::sandbox::EraParameters;
 use crate::common::narrative::{EraNarrative, NarrativeStep};
 use crate::physics::classical::{self, Mass, PhysicsBody, Radius, Velocity};
@@ -143,6 +144,32 @@ fn setup_democritus(
     ]));
     commands.insert_resource(QuizState::default());
 
+    commands.insert_resource(EraPredictions(vec![
+        Prediction {
+            question: "Se adicionarmos mais atomos, a temperatura\n(velocidade media) vai:".to_string(),
+            options: vec![
+                "Aumentar".to_string(),
+                "Diminuir".to_string(),
+                "Ficar igual".to_string(),
+                "Oscilar".to_string(),
+            ],
+            correct: 2,
+            explanation: "Conservacao de energia: novos atomos sao\nadicionados com vel. media do sistema.".to_string(),
+        },
+        Prediction {
+            question: "Se dobrarmos o tamanho da arena mantendo\nos atomos, a frequencia de colisoes vai:".to_string(),
+            options: vec![
+                "Dobrar".to_string(),
+                "Cair pela metade".to_string(),
+                "Cair a 1/4".to_string(),
+                "Ficar igual".to_string(),
+            ],
+            correct: 2,
+            explanation: "Frequencia de colisao ~ n/V^2 em 2D.\nDobrar area = quadruplicar volume efetivo.".to_string(),
+        },
+    ]));
+    commands.insert_resource(PredictState::default());
+
     commands.insert_resource(EraNarrative(vec![
         NarrativeStep {
             text: "Observe: particulas identicas colidindo no vazio.".to_string(),
@@ -237,6 +264,7 @@ fn cleanup_democritus(
     commands.remove_resource::<LimitationText>();
     commands.remove_resource::<EraEquations>();
     commands.remove_resource::<EraQuiz>();
+    commands.remove_resource::<EraPredictions>();
     commands.remove_resource::<EraParameters>();
     commands.remove_resource::<EraNarrative>();
     commands.remove_resource::<EraEvidence>();

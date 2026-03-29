@@ -6,6 +6,7 @@ use crate::common::ui::{HudText, EraControls, LimitationText, LimitationVisible}
 use crate::common::equations::{EraEquations, EquationsVisible};
 use crate::common::evidence::{EraEvidence, EvidenceVisible};
 use crate::common::quiz::{EraQuiz, QuestionData, QuizState};
+use crate::common::predict::{EraPredictions, Prediction, PredictState};
 use crate::common::sandbox::EraParameters;
 use crate::common::narrative::{EraNarrative, NarrativeStep};
 use crate::common::export::ExportableData;
@@ -237,6 +238,32 @@ fn setup_dirac(
     ]));
     commands.insert_resource(QuizState::default());
 
+    commands.insert_resource(EraPredictions(vec![
+        Prediction {
+            question: "Para criar um par eletron-positron, a energia\nminima do foton deve ser:".to_string(),
+            options: vec![
+                "0.511 MeV".to_string(),
+                "1.022 MeV".to_string(),
+                "13.6 eV".to_string(),
+                "Qualquer energia".to_string(),
+            ],
+            correct: 1,
+            explanation: "E = 2 * m_e * c^2 = 2 * 0.511 MeV = 1.022 MeV.\nPrecisa criar DUAS particulas de massa m_e.".to_string(),
+        },
+        Prediction {
+            question: "O spin do eletron (s=1/2) foi previsto por Dirac.\nQuantos estados de spin existem?".to_string(),
+            options: vec![
+                "1".to_string(),
+                "2".to_string(),
+                "3".to_string(),
+                "4 (incluindo antiparticula)".to_string(),
+            ],
+            correct: 3,
+            explanation: "Eq. de Dirac tem 4 componentes (spinor):\n2 estados de spin (up/down) x 2 (particula/antiparticula)\n= 4 solucoes independentes.".to_string(),
+        },
+    ]));
+    commands.insert_resource(PredictState::default());
+
     commands.insert_resource(EraNarrative(vec![
         NarrativeStep {
             text: "Observe: pares eletron-positron surgindo do vacuo (E = mc^2).".to_string(),
@@ -425,6 +452,7 @@ fn cleanup_dirac(
     commands.remove_resource::<LimitationText>();
     commands.remove_resource::<EraEquations>();
     commands.remove_resource::<EraQuiz>();
+    commands.remove_resource::<EraPredictions>();
     commands.remove_resource::<EraParameters>();
     commands.remove_resource::<EraNarrative>();
     commands.remove_resource::<EraEvidence>();

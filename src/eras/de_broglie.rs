@@ -6,6 +6,7 @@ use crate::common::ui::{HudText, EraControls, LimitationText, LimitationVisible}
 use crate::common::equations::{EraEquations, EquationsVisible};
 use crate::common::evidence::{EraEvidence, EvidenceVisible};
 use crate::common::quiz::{EraQuiz, QuestionData, QuizState};
+use crate::common::predict::{EraPredictions, Prediction, PredictState};
 use crate::common::sandbox::EraParameters;
 use crate::common::narrative::{EraNarrative, NarrativeStep};
 
@@ -202,6 +203,32 @@ fn setup_de_broglie(
     ]));
     commands.insert_resource(QuizState::default());
 
+    commands.insert_resource(EraPredictions(vec![
+        Prediction {
+            question: "Se dobrarmos a massa do eletron, o comprimento\nde onda de de Broglie vai:".to_string(),
+            options: vec![
+                "Dobrar".to_string(),
+                "Cair pela metade".to_string(),
+                "Ficar igual".to_string(),
+                "Quadruplicar".to_string(),
+            ],
+            correct: 1,
+            explanation: "lambda = h/(mv). Dobrando m,\nlambda cai pela metade. Inversamente proporcional.".to_string(),
+        },
+        Prediction {
+            question: "Na fenda dupla com eletrons, se fecharmos\numa fenda, o padrao de interferencia:".to_string(),
+            options: vec![
+                "Fica mais nitido".to_string(),
+                "Desaparece completamente".to_string(),
+                "Se mantem igual".to_string(),
+                "Inverte (maximos viram minimos)".to_string(),
+            ],
+            correct: 1,
+            explanation: "Interferencia requer dois caminhos.\nCom uma fenda so, temos difracao simples\nsem franjas de interferencia.".to_string(),
+        },
+    ]));
+    commands.insert_resource(PredictState::default());
+
     commands.insert_resource(EraNarrative(vec![
         NarrativeStep {
             text: "Observe: a onda estacionaria envolvendo a orbita do eletron.".to_string(),
@@ -352,6 +379,7 @@ fn cleanup_de_broglie(
     commands.remove_resource::<LimitationText>();
     commands.remove_resource::<EraEquations>();
     commands.remove_resource::<EraQuiz>();
+    commands.remove_resource::<EraPredictions>();
     commands.remove_resource::<EraParameters>();
     commands.remove_resource::<EraNarrative>();
     commands.remove_resource::<EraEvidence>();

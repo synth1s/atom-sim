@@ -4,6 +4,7 @@ use crate::common::ui::{HudText, EraControls, LimitationText, LimitationVisible}
 use crate::common::equations::{EraEquations, EquationsVisible};
 use crate::common::evidence::{EraEvidence, EvidenceVisible};
 use crate::common::quiz::{EraQuiz, QuestionData, QuizState};
+use crate::common::predict::{EraPredictions, Prediction, PredictState};
 use crate::common::sandbox::EraParameters;
 use crate::common::narrative::{EraNarrative, NarrativeStep};
 use crate::common::tooltip::Tooltip;
@@ -213,6 +214,32 @@ fn setup_bohr(
     ]));
     commands.insert_resource(QuizState::default());
 
+    commands.insert_resource(EraPredictions(vec![
+        Prediction {
+            question: "Ao descer de n=4 para n=2, a cor do\nfoton emitido sera:".to_string(),
+            options: vec![
+                "Vermelha (~656nm)".to_string(),
+                "Azul (~486nm)".to_string(),
+                "Verde (~530nm)".to_string(),
+                "UV invisivel".to_string(),
+            ],
+            correct: 1,
+            explanation: "Transicao 4->2 = serie de Balmer, H-beta.\nlambda = 486nm (azul-ciano). Nao confundir com H-alpha (3->2, vermelho).".to_string(),
+        },
+        Prediction {
+            question: "Se o eletron esta em n=3, quantas\ntransicoes de emissao sao possiveis?".to_string(),
+            options: vec![
+                "1 (3->1)".to_string(),
+                "2 (3->2 e 3->1)".to_string(),
+                "3 (3->2, 3->1, 2->1)".to_string(),
+                "Nenhuma sem energia externa".to_string(),
+            ],
+            correct: 2,
+            explanation: "De n=3: pode ir para n=2 ou n=1.\nDe n=2: pode ir para n=1. Total = 3 transicoes.".to_string(),
+        },
+    ]));
+    commands.insert_resource(PredictState::default());
+
     commands.insert_resource(EraNarrative(vec![
         NarrativeStep {
             text: "O eletron orbita em niveis discretos de energia.".to_string(),
@@ -341,6 +368,7 @@ fn cleanup_bohr(
     commands.remove_resource::<LimitationText>();
     commands.remove_resource::<EraEquations>();
     commands.remove_resource::<EraQuiz>();
+    commands.remove_resource::<EraPredictions>();
     commands.remove_resource::<EraParameters>();
     commands.remove_resource::<EraNarrative>();
     commands.remove_resource::<EraEvidence>();

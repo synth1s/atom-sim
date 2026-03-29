@@ -6,6 +6,7 @@ use crate::common::ui::{HudText, EraControls, LimitationText, LimitationVisible}
 use crate::common::equations::{EraEquations, EquationsVisible};
 use crate::common::evidence::{EraEvidence, EvidenceVisible};
 use crate::common::quiz::{EraQuiz, QuestionData, QuizState};
+use crate::common::predict::{EraPredictions, Prediction, PredictState};
 use crate::common::sandbox::EraParameters;
 use crate::common::narrative::{EraNarrative, NarrativeStep};
 use crate::physics::classical::{self, Mass, PhysicsBody, Radius, Velocity};
@@ -243,6 +244,32 @@ fn setup_dalton(
     ]));
     commands.insert_resource(QuizState::default());
 
+    commands.insert_resource(EraPredictions(vec![
+        Prediction {
+            question: "Se misturarmos H e O em proporcao 2:1,\ntodos os atomos formarao moleculas?".to_string(),
+            options: vec![
+                "Sim, sempre".to_string(),
+                "Nao, depende da energia".to_string(),
+                "Sim, pela lei de proporcoes definidas".to_string(),
+                "Nao, a proporcao deveria ser 1:1".to_string(),
+            ],
+            correct: 2,
+            explanation: "Lei de Dalton: proporcoes definidas.\nH2O exige exatamente 2H:1O por massa.".to_string(),
+        },
+        Prediction {
+            question: "Se um atomo de C pesa 12x mais que H,\nentao CO2 pesa quantas vezes mais que H?".to_string(),
+            options: vec![
+                "12".to_string(),
+                "28".to_string(),
+                "44".to_string(),
+                "14".to_string(),
+            ],
+            correct: 2,
+            explanation: "CO2 = 12 + 2*16 = 44 unidades.\nDalton previa massas relativas dos compostos.".to_string(),
+        },
+    ]));
+    commands.insert_resource(PredictState::default());
+
     commands.insert_resource(EraNarrative(vec![
         NarrativeStep {
             text: "Observe: elementos com cores e tamanhos distintos (H, C, N, O).".to_string(),
@@ -378,6 +405,7 @@ fn cleanup_dalton(
     commands.remove_resource::<LimitationText>();
     commands.remove_resource::<EraEquations>();
     commands.remove_resource::<EraQuiz>();
+    commands.remove_resource::<EraPredictions>();
     commands.remove_resource::<EraParameters>();
     commands.remove_resource::<EraNarrative>();
     commands.remove_resource::<EraEvidence>();

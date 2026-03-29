@@ -7,6 +7,7 @@ use crate::common::ui::{HudText, EraControls, LimitationText, LimitationVisible}
 use crate::common::equations::{EraEquations, EquationsVisible};
 use crate::common::evidence::{EraEvidence, EvidenceVisible};
 use crate::common::quiz::{EraQuiz, QuestionData, QuizState};
+use crate::common::predict::{EraPredictions, Prediction, PredictState};
 use crate::common::sandbox::EraParameters;
 use crate::common::narrative::{EraNarrative, NarrativeStep};
 use crate::physics::coulomb;
@@ -230,6 +231,32 @@ fn setup_thomson(
     ]));
     commands.insert_resource(QuizState::default());
 
+    commands.insert_resource(EraPredictions(vec![
+        Prediction {
+            question: "Se aumentarmos o campo E no tubo catodico,\no feixe de eletrons vai:".to_string(),
+            options: vec![
+                "Desviar mais na direcao do campo".to_string(),
+                "Desviar menos".to_string(),
+                "Alargar sem desviar".to_string(),
+                "Nao mudar".to_string(),
+            ],
+            correct: 0,
+            explanation: "F = qE. Maior campo = maior forca\n= maior deflexao. Thomson mediu e/m assim.".to_string(),
+        },
+        Prediction {
+            question: "Se usarmos gas diferente no tubo,\na razao e/m do raio catodico vai:".to_string(),
+            options: vec![
+                "Mudar com o gas".to_string(),
+                "Ficar igual".to_string(),
+                "Depender da pressao".to_string(),
+                "Dobrar".to_string(),
+            ],
+            correct: 1,
+            explanation: "Thomson mostrou que e/m e universal:\neletrons sao os mesmos em qualquer gas.".to_string(),
+        },
+    ]));
+    commands.insert_resource(PredictState::default());
+
     commands.insert_resource(EraNarrative(vec![
         NarrativeStep {
             text: "Observe: eletrons embutidos numa esfera positiva (pudim de passas).".to_string(),
@@ -406,6 +433,7 @@ fn cleanup_thomson(
     commands.remove_resource::<LimitationText>();
     commands.remove_resource::<EraEquations>();
     commands.remove_resource::<EraQuiz>();
+    commands.remove_resource::<EraPredictions>();
     commands.remove_resource::<EraParameters>();
     commands.remove_resource::<EraNarrative>();
     commands.remove_resource::<EraEvidence>();

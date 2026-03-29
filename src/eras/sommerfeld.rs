@@ -5,6 +5,7 @@ use crate::common::ui::{HudText, EraControls, LimitationText, LimitationVisible}
 use crate::common::equations::{EraEquations, EquationsVisible};
 use crate::common::evidence::{EraEvidence, EvidenceVisible};
 use crate::common::quiz::{EraQuiz, QuestionData, QuizState};
+use crate::common::predict::{EraPredictions, Prediction, PredictState};
 use crate::common::sandbox::EraParameters;
 use crate::common::narrative::{EraNarrative, NarrativeStep};
 use crate::physics::spectral;
@@ -220,6 +221,32 @@ fn setup_sommerfeld(
     ]));
     commands.insert_resource(QuizState::default());
 
+    commands.insert_resource(EraPredictions(vec![
+        Prediction {
+            question: "Ao aplicar campo magnetico (Zeeman), o nivel\nn=2 se desdobra em quantas linhas?".to_string(),
+            options: vec![
+                "2".to_string(),
+                "3".to_string(),
+                "4".to_string(),
+                "5".to_string(),
+            ],
+            correct: 2,
+            explanation: "n=2 tem l=0 (m=0) e l=1 (m=-1,0,+1).\nTotal 4 estados, mas Zeeman normal desdobra em 3 linhas\n(Delta m = -1, 0, +1).".to_string(),
+        },
+        Prediction {
+            question: "A orbita com k=1 (circular) e k=n (mais\neliptica) tem a mesma energia em Bohr. E em Sommerfeld?".to_string(),
+            options: vec![
+                "Sim, identica".to_string(),
+                "Nao, eliptica tem energia menor".to_string(),
+                "Nao, eliptica tem energia maior".to_string(),
+                "Depende do campo magnetico".to_string(),
+            ],
+            correct: 1,
+            explanation: "Correcao relativistica de Sommerfeld: orbitas\nelipticas penetram mais perto do nucleo,\nsofrendo maior vel. -> energia ligeiramente menor.".to_string(),
+        },
+    ]));
+    commands.insert_resource(PredictState::default());
+
     commands.insert_resource(EraNarrative(vec![
         NarrativeStep {
             text: "Observe: orbitas elipticas com diferentes excentricidades.".to_string(),
@@ -360,6 +387,7 @@ fn cleanup_sommerfeld(
     commands.remove_resource::<LimitationText>();
     commands.remove_resource::<EraEquations>();
     commands.remove_resource::<EraQuiz>();
+    commands.remove_resource::<EraPredictions>();
     commands.remove_resource::<EraParameters>();
     commands.remove_resource::<EraNarrative>();
     commands.remove_resource::<EraEvidence>();

@@ -5,6 +5,7 @@ use crate::common::ui::{HudText, EraControls, LimitationText, LimitationVisible}
 use crate::common::equations::{EraEquations, EquationsVisible};
 use crate::common::evidence::{EraEvidence, EvidenceVisible};
 use crate::common::quiz::{EraQuiz, QuestionData, QuizState};
+use crate::common::predict::{EraPredictions, Prediction, PredictState};
 use crate::common::sandbox::EraParameters;
 use crate::common::narrative::{EraNarrative, NarrativeStep};
 use crate::common::tooltip::Tooltip;
@@ -171,6 +172,32 @@ fn setup_schrodinger(
     ]));
     commands.insert_resource(QuizState::default());
 
+    commands.insert_resource(EraPredictions(vec![
+        Prediction {
+            question: "O orbital 2p tem quantos lobulos?".to_string(),
+            options: vec![
+                "1".to_string(),
+                "2".to_string(),
+                "3".to_string(),
+                "4".to_string(),
+            ],
+            correct: 1,
+            explanation: "O orbital p (l=1) tem 2 lobulos simetricos\nseparados por um plano nodal. Cada orientacao\n(px, py, pz) tem 2 lobulos.".to_string(),
+        },
+        Prediction {
+            question: "Se clicarmos para 'medir' a posicao do eletron,\na nuvem de probabilidade vai:".to_string(),
+            options: vec![
+                "Ficar mais difusa".to_string(),
+                "Colapsar para um ponto".to_string(),
+                "Nao mudar".to_string(),
+                "Inverter simetria".to_string(),
+            ],
+            correct: 1,
+            explanation: "Postulado da medicao: ao medir posicao,\n|psi|^2 colapsa para autovalor observado.\nIncerteza de Heisenberg: Delta x * Delta p >= h/2.".to_string(),
+        },
+    ]));
+    commands.insert_resource(PredictState::default());
+
     commands.insert_resource(EraNarrative(vec![
         NarrativeStep {
             text: "Observe: nuvem de probabilidade |psi|^2 — o eletron nao tem orbita definida.".to_string(),
@@ -232,6 +259,7 @@ fn cleanup_schrodinger(
     commands.remove_resource::<LimitationText>();
     commands.remove_resource::<EraEquations>();
     commands.remove_resource::<EraQuiz>();
+    commands.remove_resource::<EraPredictions>();
     commands.remove_resource::<EraParameters>();
     commands.remove_resource::<EraNarrative>();
     commands.remove_resource::<EraEvidence>();
