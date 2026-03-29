@@ -1,16 +1,16 @@
 use bevy::prelude::*;
-use super::SimulationState;
+use super::{ActiveEra, SimulationState};
 
 pub struct HudPlugin;
 
 impl Plugin for HudPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(Startup, spawn_hud)
-            .add_systems(Update, (update_hud, toggle_pause));
+            .add_systems(Update, (update_status_hud, toggle_pause, switch_era));
     }
 }
 
-/// Marcador para o texto principal do HUD.
+/// Marcador para o texto principal do HUD (contexto histórico).
 #[derive(Component)]
 pub struct HudText;
 
@@ -23,17 +23,10 @@ struct StatusText;
 struct ControlsText;
 
 fn spawn_hud(mut commands: Commands) {
-    // Título e contexto histórico (topo esquerdo)
+    // Título e contexto histórico (topo esquerdo) — será atualizado por cada era
     commands.spawn((
         HudText,
-        Text2d::new(
-            "DEMOCRITO (~400 a.C.) \u{2014} Atomos indivisiveis no vazio\n\n\
-             \"Nada existe exceto atomos e vazio; tudo o mais e opiniao.\"\n\n\
-             Particulas identicas e eternas movendo-se no vazio,\n\
-             colidindo mecanicamente. Sem forcas a distancia.\n\n\
-             LIMITACAO: Todos os atomos sao identicos.\n\
-             Como explicar a diversidade da materia?"
-        ),
+        Text2d::new(""),
         TextFont {
             font_size: 16.0,
             ..default()
@@ -62,7 +55,8 @@ fn spawn_hud(mut commands: Commands) {
             "CONTROLES:\n\
              [Espaco] Pausar/Retomar\n\
              [Clique] Adicionar atomo\n\
-             [Scroll] Zoom"
+             [Scroll] Zoom\n\
+             [1-2] Trocar era"
         ),
         TextFont {
             font_size: 14.0,
@@ -74,7 +68,7 @@ fn spawn_hud(mut commands: Commands) {
     ));
 }
 
-fn update_hud(
+fn update_status_hud(
     state: Res<State<SimulationState>>,
     mut query: Query<(&mut Text2d, &mut TextColor), With<StatusText>>,
 ) {
@@ -102,5 +96,16 @@ fn toggle_pause(
             SimulationState::Running => next_state.set(SimulationState::Paused),
             SimulationState::Paused => next_state.set(SimulationState::Running),
         }
+    }
+}
+
+fn switch_era(
+    keyboard: Res<ButtonInput<KeyCode>>,
+    mut next_era: ResMut<NextState<ActiveEra>>,
+) {
+    if keyboard.just_pressed(KeyCode::Digit1) {
+        next_era.set(ActiveEra::Democritus);
+    } else if keyboard.just_pressed(KeyCode::Digit2) {
+        next_era.set(ActiveEra::Dalton);
     }
 }

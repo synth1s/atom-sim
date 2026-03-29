@@ -1,5 +1,5 @@
 mod camera;
-mod ui;
+pub mod ui;
 
 pub use camera::CameraPlugin;
 pub use ui::HudPlugin;
@@ -12,6 +12,14 @@ pub enum SimulationState {
     #[default]
     Running,
     Paused,
+}
+
+/// Qual era histórica está ativa.
+#[derive(States, Default, Debug, Clone, PartialEq, Eq, Hash)]
+pub enum ActiveEra {
+    #[default]
+    Democritus,
+    Dalton,
 }
 
 /// Configuração do espaço (arena) onde os átomos se movem.
