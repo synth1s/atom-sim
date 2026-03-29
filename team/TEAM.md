@@ -8,11 +8,21 @@ Cada agente e uma instancia de IA (Claude) configurada por um **spec file** que 
 
 ## Estrutura de Memoria
 
+**Specs (compartilhados):** https://github.com/synth1s/agency
+**Contexto (local):** atom-sim/team/context/
+
 ```
-team/
-├── TEAM.md              ← este arquivo (catalogo)
-├── specs/               ← PROMPTS que definem cada agente (versionar!)
+synth1s/agency/          ← repositorio centralizado (specs compartilhados)
+├── specs/               ← CANONICAL: specs dos agentes
 │   ├── SE-001.spec.md
+│   └── ...
+├── TEAM.md
+└── projects/atom-sim/   ← registros de entregas deste projeto
+
+atom-sim/team/           ← contexto LOCAL deste projeto
+├── TEAM.md              ← este arquivo
+├── specs/               ← DEPRECATED (ver specs/DEPRECATED.md)
+│   ├── SE-001.spec.md   ← copia historica, nao editar
 │   ├── PH-001.spec.md
 │   ├── UX-001.spec.md
 │   ├── QM-001.spec.md

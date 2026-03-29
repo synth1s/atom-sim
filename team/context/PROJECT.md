@@ -85,3 +85,10 @@ Cada era segue este padrao:
 - `.github/workflows/ci.yml`: fmt, clippy, test, build --release
 - Runner: ubuntu-latest com deps Bevy (libasound2-dev, libudev-dev, etc)
 - Cache: Cargo registry + target
+
+## Agency
+
+- **Specs dos agentes (canonical):** https://github.com/synth1s/agency/specs/
+- **Local clone:** F:/Users/goula/projects/lab/agency/
+- **Registros de entregas:** agency/projects/atom-sim/
+- Specs no atom-sim/team/specs/ estao DEPRECATED (copia historica)
