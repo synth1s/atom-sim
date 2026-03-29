@@ -30,6 +30,36 @@
 **Decisao:** Toda priorizacao deve vir acompanhada de metricas objetivas (LOC, risco, score ROI, dependencias). Opiniao sem dados nao e suficiente.
 **Aplica-se a:** CP-001, AD-001, TL-001, GP-001.
 
+### D-005: Sincronizacao de memoria obrigatoria
+**Data:** 2026-03-29
+**Contexto:** Existem dois silos de memoria isolados — a memoria do Claude (~/.claude/memory/) e os context files dos agentes (team/context/). Subagentes nao acessam a memoria do Claude. O Claude nao le team/context/ automaticamente.
+**Decisao:** Apos cada entrega significativa (sprint, correcao, nova feature, nova decisao), o coordenador (Claude principal) DEVE executar o protocolo de sincronizacao definido abaixo.
+**Aplica-se a:** Coordenador (Claude principal) em toda conversa sobre atom-sim.
+
+## Protocolo de Sincronizacao de Memoria
+
+O coordenador e a UNICA ponte entre os dois silos. Apos cada entrega significativa:
+
+### Passo 1: Atualizar memoria dos agentes (team/context/)
+- `PROJECT.md`: atualizar LOC, arquivos, testes, features, problemas conhecidos
+- `DECISIONS.md`: registrar novas decisoes do proprietario ou convencoes tecnicas
+- `CHANGELOG.md`: registrar o que mudou e por que
+
+### Passo 2: Atualizar memoria do Claude (~/.claude/memory/)
+- Se houve nova decisao do proprietario → atualizar feedback memories
+- Se o estado do projeto mudou significativamente → atualizar project memory
+- Se novo agente foi criado ou dispensado → atualizar reference memory
+
+### Passo 3: Verificar consistencia
+- A informacao em `~/.claude/memory/project_atom_sim.md` deve ser coerente com `team/context/PROJECT.md`
+- As decisoes em `~/.claude/memory/feedback_*.md` devem estar refletidas em `team/context/DECISIONS.md`
+
+### Quando sincronizar
+- Apos cada commit
+- Apos cada decisao do proprietario
+- No inicio de cada nova conversa (ler ambos os silos e reconciliar se houver divergencia)
+- Quando o proprietario solicitar
+
 ## Convencoes Tecnicas
 
 ### C-001: Texto sem acentos no codigo
@@ -62,3 +92,4 @@ Toda funcao publica em `physics/` deve ter pelo menos 1 teste unitario validando
 | 2026-03-29 | D-003 Delegacao | Proprietario quer time atuando |
 | 2026-03-29 | D-004 Dados | Proprietario quer metricas |
 | 2026-03-29 | C-001 a C-007 | Extraidos das avaliacoes SE-001/PH-001/UX-001 |
+| 2026-03-29 | D-005 Sincronizacao | Dois silos de memoria isolados precisam de ponte manual |
