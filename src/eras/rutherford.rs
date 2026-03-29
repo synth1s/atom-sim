@@ -5,6 +5,7 @@ use crate::common::ui::{HudText, EraControls, LimitationText, LimitationVisible}
 use crate::common::equations::{EraEquations, EquationsVisible};
 use crate::common::quiz::{EraQuiz, QuestionData, QuizState};
 use crate::common::sandbox::EraParameters;
+use crate::common::narrative::{EraNarrative, NarrativeStep};
 use crate::common::tooltip::Tooltip;
 use crate::common::export::ExportableData;
 
@@ -241,6 +242,21 @@ fn setup_rutherford(
     ]));
     commands.insert_resource(QuizState::default());
 
+    commands.insert_resource(EraNarrative(vec![
+        NarrativeStep {
+            text: "Observe: alfas sendo disparadas contra folha de ouro (Au Z=79).".to_string(),
+            action_hint: "Veja a maioria atravessando sem desvio".to_string(),
+        },
+        NarrativeStep {
+            text: "~1/8000 alfas retroespalham! Deve haver algo denso e positivo.".to_string(),
+            action_hint: "Pressione [C] para ver o colapso classico".to_string(),
+        },
+        NarrativeStep {
+            text: "Eletron orbitando irradia energia (Larmor): colapso em ~16 ps!".to_string(),
+            action_hint: "Avance para Bohr [->]".to_string(),
+        },
+    ]));
+
     // Núcleo — ponto vermelho minúsculo
     commands.spawn((
         RutherfordEntity,
@@ -355,6 +371,7 @@ fn cleanup_rutherford(
     commands.remove_resource::<EraEquations>();
     commands.remove_resource::<EraQuiz>();
     commands.remove_resource::<EraParameters>();
+    commands.remove_resource::<EraNarrative>();
 }
 
 // ---------------------------------------------------------------------------

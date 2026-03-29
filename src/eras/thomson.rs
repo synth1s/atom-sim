@@ -7,6 +7,7 @@ use crate::common::ui::{HudText, EraControls, LimitationText, LimitationVisible}
 use crate::common::equations::{EraEquations, EquationsVisible};
 use crate::common::quiz::{EraQuiz, QuestionData, QuizState};
 use crate::common::sandbox::EraParameters;
+use crate::common::narrative::{EraNarrative, NarrativeStep};
 use crate::physics::coulomb;
 
 pub struct ThomsonPlugin;
@@ -222,6 +223,21 @@ fn setup_thomson(
     ]));
     commands.insert_resource(QuizState::default());
 
+    commands.insert_resource(EraNarrative(vec![
+        NarrativeStep {
+            text: "Observe: eletrons embutidos numa esfera positiva (pudim de passas).".to_string(),
+            action_hint: "Veja os eletrons oscilando dentro do atomo".to_string(),
+        },
+        NarrativeStep {
+            text: "Thomson mediu e/m no tubo catodico — eletron e universal!".to_string(),
+            action_hint: "Pressione [A] para disparar alfas contra o atomo".to_string(),
+        },
+        NarrativeStep {
+            text: "Alfas atravessam sem desvio: o modelo nao tem nucleo denso.".to_string(),
+            action_hint: "Avance para Rutherford [->]".to_string(),
+        },
+    ]));
+
     // Pré-alocar handles para partículas emitidas
     commands.insert_resource(ThomsonParticleAssets {
         cathode_mesh: meshes.add(Circle::new(3.0)),
@@ -384,6 +400,7 @@ fn cleanup_thomson(
     commands.remove_resource::<EraEquations>();
     commands.remove_resource::<EraQuiz>();
     commands.remove_resource::<EraParameters>();
+    commands.remove_resource::<EraNarrative>();
 }
 
 // ---------------------------------------------------------------------------

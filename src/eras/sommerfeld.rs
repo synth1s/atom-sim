@@ -5,6 +5,7 @@ use crate::common::ui::{HudText, EraControls, LimitationText, LimitationVisible}
 use crate::common::equations::{EraEquations, EquationsVisible};
 use crate::common::quiz::{EraQuiz, QuestionData, QuizState};
 use crate::common::sandbox::EraParameters;
+use crate::common::narrative::{EraNarrative, NarrativeStep};
 use crate::physics::spectral;
 
 pub struct SommerfeldPlugin;
@@ -212,6 +213,21 @@ fn setup_sommerfeld(
     ]));
     commands.insert_resource(QuizState::default());
 
+    commands.insert_resource(EraNarrative(vec![
+        NarrativeStep {
+            text: "Observe: orbitas elipticas com diferentes excentricidades.".to_string(),
+            action_hint: "Pressione [Setas] para mudar n e k".to_string(),
+        },
+        NarrativeStep {
+            text: "A precessao relativistica separa niveis com mesmo n mas k diferente.".to_string(),
+            action_hint: "Observe o desdobramento da estrutura fina".to_string(),
+        },
+        NarrativeStep {
+            text: "Nao explica o spin do eletron nem o efeito Zeeman anomalo.".to_string(),
+            action_hint: "Avance para de Broglie [->]".to_string(),
+        },
+    ]));
+
     // Núcleo
     commands.spawn((
         SommerfeldEntity,
@@ -338,6 +354,7 @@ fn cleanup_sommerfeld(
     commands.remove_resource::<EraEquations>();
     commands.remove_resource::<EraQuiz>();
     commands.remove_resource::<EraParameters>();
+    commands.remove_resource::<EraNarrative>();
 }
 
 // ---------------------------------------------------------------------------

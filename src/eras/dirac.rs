@@ -6,6 +6,7 @@ use crate::common::ui::{HudText, EraControls, LimitationText, LimitationVisible}
 use crate::common::equations::{EraEquations, EquationsVisible};
 use crate::common::quiz::{EraQuiz, QuestionData, QuizState};
 use crate::common::sandbox::EraParameters;
+use crate::common::narrative::{EraNarrative, NarrativeStep};
 use crate::common::export::ExportableData;
 use crate::physics::spectral;
 
@@ -229,6 +230,21 @@ fn setup_dirac(
     ]));
     commands.insert_resource(QuizState::default());
 
+    commands.insert_resource(EraNarrative(vec![
+        NarrativeStep {
+            text: "Observe: pares eletron-positron surgindo do vacuo (E = mc^2).".to_string(),
+            action_hint: "Veja a criacao espontanea de pares".to_string(),
+        },
+        NarrativeStep {
+            text: "O spin emerge naturalmente da equacao — nao e postulado!".to_string(),
+            action_hint: "Observe as setas de spin nas particulas".to_string(),
+        },
+        NarrativeStep {
+            text: "Unificacao: mecanica quantica + relatividade especial. O modelo mais completo.".to_string(),
+            action_hint: "Fim da jornada — explore todas as eras!".to_string(),
+        },
+    ]));
+
     // Pré-alocar handles para partículas emitidas
     commands.insert_resource(DiracParticleAssets {
         electron_mesh: meshes.add(Circle::new(6.0)),
@@ -403,6 +419,7 @@ fn cleanup_dirac(
     commands.remove_resource::<EraEquations>();
     commands.remove_resource::<EraQuiz>();
     commands.remove_resource::<EraParameters>();
+    commands.remove_resource::<EraNarrative>();
 }
 
 // ---------------------------------------------------------------------------

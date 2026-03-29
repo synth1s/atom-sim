@@ -4,6 +4,7 @@ use crate::common::ui::{HudText, EraControls, LimitationText, LimitationVisible}
 use crate::common::equations::{EraEquations, EquationsVisible};
 use crate::common::quiz::{EraQuiz, QuestionData, QuizState};
 use crate::common::sandbox::EraParameters;
+use crate::common::narrative::{EraNarrative, NarrativeStep};
 use crate::common::tooltip::Tooltip;
 use crate::common::export::ExportableData;
 use crate::physics::spectral;
@@ -205,6 +206,21 @@ fn setup_bohr(
     ]));
     commands.insert_resource(QuizState::default());
 
+    commands.insert_resource(EraNarrative(vec![
+        NarrativeStep {
+            text: "O eletron orbita em niveis discretos de energia.".to_string(),
+            action_hint: "Pressione [Baixo] para descer de orbita".to_string(),
+        },
+        NarrativeStep {
+            text: "Um foton e emitido com cor especifica ao descer!".to_string(),
+            action_hint: "Observe o espectro se formando".to_string(),
+        },
+        NarrativeStep {
+            text: "Modelo funciona para H, mas falha para He e atomos maiores.".to_string(),
+            action_hint: "Pressione [E] para ver as equacoes".to_string(),
+        },
+    ]));
+
     // Núcleo
     commands.spawn((
         BohrEntity,
@@ -319,6 +335,7 @@ fn cleanup_bohr(
     commands.remove_resource::<EraEquations>();
     commands.remove_resource::<EraQuiz>();
     commands.remove_resource::<EraParameters>();
+    commands.remove_resource::<EraNarrative>();
 }
 
 // ---------------------------------------------------------------------------

@@ -5,6 +5,7 @@ use crate::common::ui::{HudText, EraControls, LimitationText, LimitationVisible}
 use crate::common::equations::{EraEquations, EquationsVisible};
 use crate::common::quiz::{EraQuiz, QuestionData, QuizState};
 use crate::common::sandbox::EraParameters;
+use crate::common::narrative::{EraNarrative, NarrativeStep};
 use crate::common::tooltip::Tooltip;
 use crate::common::export::ExportableData;
 use crate::physics::{quantum, spectral};
@@ -163,6 +164,21 @@ fn setup_schrodinger(
     ]));
     commands.insert_resource(QuizState::default());
 
+    commands.insert_resource(EraNarrative(vec![
+        NarrativeStep {
+            text: "Observe: nuvem de probabilidade |psi|^2 — o eletron nao tem orbita definida.".to_string(),
+            action_hint: "Pressione [Setas] para mudar n, l, m".to_string(),
+        },
+        NarrativeStep {
+            text: "Clique para colapsar a funcao de onda — medicao localiza o eletron!".to_string(),
+            action_hint: "Clique na nuvem para medir a posicao".to_string(),
+        },
+        NarrativeStep {
+            text: "Equacao nao-relativistica: ignora spin e criacao de pares.".to_string(),
+            action_hint: "Avance para Dirac [->]".to_string(),
+        },
+    ]));
+
     // Núcleo
     commands.spawn((
         SchrodingerEntity,
@@ -210,6 +226,7 @@ fn cleanup_schrodinger(
     commands.remove_resource::<EraEquations>();
     commands.remove_resource::<EraQuiz>();
     commands.remove_resource::<EraParameters>();
+    commands.remove_resource::<EraNarrative>();
 }
 
 // ---------------------------------------------------------------------------

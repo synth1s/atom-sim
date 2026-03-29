@@ -6,6 +6,7 @@ use crate::common::ui::{HudText, EraControls, LimitationText, LimitationVisible}
 use crate::common::equations::{EraEquations, EquationsVisible};
 use crate::common::quiz::{EraQuiz, QuestionData, QuizState};
 use crate::common::sandbox::EraParameters;
+use crate::common::narrative::{EraNarrative, NarrativeStep};
 
 pub struct DeBrogliePlugin;
 
@@ -194,6 +195,21 @@ fn setup_de_broglie(
     ]));
     commands.insert_resource(QuizState::default());
 
+    commands.insert_resource(EraNarrative(vec![
+        NarrativeStep {
+            text: "Observe: a onda estacionaria envolvendo a orbita do eletron.".to_string(),
+            action_hint: "Pressione [Setas] para mudar o nivel quantico".to_string(),
+        },
+        NarrativeStep {
+            text: "Lambda = h/p — so orbitas com n*lambda = 2*pi*r sao permitidas.".to_string(),
+            action_hint: "Pressione [D] para ver a fenda dupla".to_string(),
+        },
+        NarrativeStep {
+            text: "Onda associada, mas sem equacao de onda completa.".to_string(),
+            action_hint: "Avance para Schrodinger [->]".to_string(),
+        },
+    ]));
+
     // Pré-alocar handles para partículas da fenda dupla
     commands.insert_resource(DeBroglieParticleAssets {
         slit_particle_mesh: meshes.add(Circle::new(2.0)),
@@ -330,6 +346,7 @@ fn cleanup_de_broglie(
     commands.remove_resource::<EraEquations>();
     commands.remove_resource::<EraQuiz>();
     commands.remove_resource::<EraParameters>();
+    commands.remove_resource::<EraNarrative>();
 }
 
 // ---------------------------------------------------------------------------

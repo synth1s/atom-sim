@@ -126,7 +126,8 @@ fn update_controls_hud(
                 [Q] Quiz\n\
                 [P] Parametros\n\
                 [S] Snapshot\n\
-                [F5] Auto-Tour";
+                [F5] Auto-Tour\n\
+                [G] Modo Guiado";
 
     let full = if era_controls.0.is_empty() {
         base.to_string()

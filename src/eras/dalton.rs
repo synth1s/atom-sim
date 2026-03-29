@@ -6,6 +6,7 @@ use crate::common::ui::{HudText, EraControls, LimitationText, LimitationVisible}
 use crate::common::equations::{EraEquations, EquationsVisible};
 use crate::common::quiz::{EraQuiz, QuestionData, QuizState};
 use crate::common::sandbox::EraParameters;
+use crate::common::narrative::{EraNarrative, NarrativeStep};
 use crate::physics::classical::{self, Mass, PhysicsBody, Radius, Velocity};
 
 pub struct DaltonPlugin;
@@ -235,6 +236,21 @@ fn setup_dalton(
     ]));
     commands.insert_resource(QuizState::default());
 
+    commands.insert_resource(EraNarrative(vec![
+        NarrativeStep {
+            text: "Observe: elementos com cores e tamanhos distintos (H, C, N, O).".to_string(),
+            action_hint: "Pressione [Tab] para trocar o elemento selecionado".to_string(),
+        },
+        NarrativeStep {
+            text: "Colisoes entre H e O formam moleculas — proporcoes definidas!".to_string(),
+            action_hint: "Clique para adicionar atomos e observe reacoes".to_string(),
+        },
+        NarrativeStep {
+            text: "Mas atomos sao realmente indivisiveis? O que ha dentro?".to_string(),
+            action_hint: "Avance para Thomson [->]".to_string(),
+        },
+    ]));
+
     // Arena walls
     let wall_color = Color::srgba(0.3, 0.3, 0.35, 0.6);
     let thickness = 2.0;
@@ -356,6 +372,7 @@ fn cleanup_dalton(
     commands.remove_resource::<EraEquations>();
     commands.remove_resource::<EraQuiz>();
     commands.remove_resource::<EraParameters>();
+    commands.remove_resource::<EraNarrative>();
 }
 
 // ---------------------------------------------------------------------------

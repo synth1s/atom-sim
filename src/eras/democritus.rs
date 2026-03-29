@@ -6,6 +6,7 @@ use crate::common::ui::{HudText, EraControls, LimitationText, LimitationVisible}
 use crate::common::equations::{EraEquations, EquationsVisible};
 use crate::common::quiz::{EraQuiz, QuestionData, QuizState};
 use crate::common::sandbox::EraParameters;
+use crate::common::narrative::{EraNarrative, NarrativeStep};
 use crate::physics::classical::{self, Mass, PhysicsBody, Radius, Velocity};
 
 pub struct DemocritusPlugin;
@@ -135,6 +136,21 @@ fn setup_democritus(
     ]));
     commands.insert_resource(QuizState::default());
 
+    commands.insert_resource(EraNarrative(vec![
+        NarrativeStep {
+            text: "Observe: particulas identicas colidindo no vazio.".to_string(),
+            action_hint: "Clique para adicionar atomos".to_string(),
+        },
+        NarrativeStep {
+            text: "Todas sao iguais — mesma cor, mesmo tamanho.".to_string(),
+            action_hint: "Pressione [L] para ver a limitacao".to_string(),
+        },
+        NarrativeStep {
+            text: "Como explicar a diversidade da materia?".to_string(),
+            action_hint: "Avance para Dalton [->]".to_string(),
+        },
+    ]));
+
     // Arena walls
     let wall_color = Color::srgba(0.3, 0.3, 0.35, 0.6);
     let thickness = 2.0;
@@ -215,6 +231,7 @@ fn cleanup_democritus(
     commands.remove_resource::<EraEquations>();
     commands.remove_resource::<EraQuiz>();
     commands.remove_resource::<EraParameters>();
+    commands.remove_resource::<EraNarrative>();
 }
 
 fn spawn_atom_on_click(
