@@ -108,7 +108,11 @@ pub fn hydrogen_radial(n: u32, l: u32, r_meters: f64) -> f64 {
 /// P(x,y) = |ψ(r,θ,φ=0)|² para corte no plano xz
 ///
 /// Para visualização 2D, usamos corte no plano que passa pelo eixo z:
-/// (x,y) → (r = √(x²+y²), θ = atan2(√(x²),y), φ = 0)
+/// (x,y) → (r = √(x²+y²), θ = x.atan2(y), φ = 0)
+///
+/// θ é o ângulo polar medido a partir do eixo z (que corresponde ao eixo y
+/// no display 2D). Assim, `x.atan2(y)` retorna 0 quando o ponto está no
+/// eixo y positivo e π/2 quando está no eixo x positivo.
 pub fn probability_density_2d(n: u32, l: u32, m: i32, x: f64, y: f64) -> f64 {
     let r = (x * x + y * y).sqrt();
     if r < 1e-15 {
@@ -121,7 +125,7 @@ pub fn probability_density_2d(n: u32, l: u32, m: i32, x: f64, y: f64) -> f64 {
         return 0.0; // Para l>0, ψ(0)=0
     }
 
-    let theta = y.atan2(x); // Ângulo no plano de corte
+    let theta = x.atan2(y); // Ângulo polar medido do eixo z (y no display)
 
     // Parte radial
     let radial = hydrogen_radial(n, l, r);
@@ -140,7 +144,7 @@ pub fn probability_density_2d(n: u32, l: u32, m: i32, x: f64, y: f64) -> f64 {
 }
 
 /// Fatorial simples (suficiente para n ≤ 20).
-fn factorial(n: u32) -> u64 {
+pub(crate) fn factorial(n: u32) -> u64 {
     (1..=n as u64).product::<u64>().max(1)
 }
 
@@ -187,4 +191,62 @@ pub fn sample_orbital_points(
     }
 
     points
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_laguerre_l0() {
+        // L_0^a(x) = 1 para qualquer a, x
+        assert!((laguerre(0, 0, 5.0) - 1.0).abs() < 1e-10);
+        assert!((laguerre(0, 3, 2.0) - 1.0).abs() < 1e-10);
+    }
+
+    #[test]
+    fn test_laguerre_l1() {
+        // L_1^2(3) = 1 + 2 - 3 = 0
+        assert!((laguerre(1, 2, 3.0) - 0.0).abs() < 1e-10);
+    }
+
+    #[test]
+    fn test_associated_legendre_p10() {
+        // P_1^0(x) = x → P_1^0(0.5) = 0.5
+        let val = associated_legendre(1, 0, 0.5);
+        assert!((val - 0.5).abs() < 1e-10, "P_1^0(0.5) = {}", val);
+    }
+
+    #[test]
+    fn test_associated_legendre_p11() {
+        // P_1^1(x) = -(1-x^2)^{1/2} → P_1^1(0.5) = -sqrt(0.75)
+        let val = associated_legendre(1, 1, 0.5);
+        let expected = -(1.0 - 0.25_f64).sqrt();
+        assert!((val - expected).abs() < 1e-10, "P_1^1(0.5) = {}", val);
+    }
+
+    #[test]
+    fn test_factorial() {
+        assert_eq!(factorial(0), 1);
+        assert_eq!(factorial(1), 1);
+        assert_eq!(factorial(5), 120);
+        assert_eq!(factorial(10), 3628800);
+    }
+
+    #[test]
+    fn test_probability_density_1s_origin() {
+        // |ψ_1s(0)|² > 0 (orbital s tem densidade finita na origem)
+        let density = probability_density_2d(1, 0, 0, 0.0, 0.0);
+        assert!(density > 0.0, "|psi_1s(0)|^2 = {}", density);
+    }
+
+    #[test]
+    fn test_2p_orbital_symmetry() {
+        // 2p orbital (l=1, m=0): lóbulos ao longo do eixo z (y no display)
+        // Densidade no eixo y deve ser MAIOR que no eixo x para mesma distância
+        let d = 2.0 * BOHR_RADIUS_M;
+        let on_y = probability_density_2d(2, 1, 0, 0.0, d);
+        let on_x = probability_density_2d(2, 1, 0, d, 0.0);
+        assert!(on_y > on_x * 5.0, "2p lobe should be along y axis: on_y={} on_x={}", on_y, on_x);
+    }
 }

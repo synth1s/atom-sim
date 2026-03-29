@@ -2,7 +2,7 @@ use bevy::prelude::*;
 use rand::Rng;
 
 use crate::common::{ActiveEra, SimulationState};
-use crate::common::ui::HudText;
+use crate::common::ui::{HudText, EraControls};
 use crate::physics::spectral;
 
 pub struct DiracPlugin;
@@ -71,6 +71,19 @@ struct DiracInfoText;
 
 #[derive(Component)]
 struct EnergySpectrumText;
+
+/// Handles pré-alocados para partículas emitidas (evita leak de handles).
+#[derive(Resource)]
+struct DiracParticleAssets {
+    electron_mesh: Handle<Mesh>,
+    electron_mat: Handle<ColorMaterial>,
+    positron_mesh: Handle<Mesh>,
+    positron_mat: Handle<ColorMaterial>,
+    gamma_mesh: Handle<Mesh>,
+    gamma_mat: Handle<ColorMaterial>,
+    gamma_high_mesh: Handle<Mesh>,
+    gamma_high_mat: Handle<ColorMaterial>,
+}
 
 // ---------------------------------------------------------------------------
 // Resources
@@ -149,6 +162,29 @@ fn setup_dirac(
     }
 
     commands.insert_resource(DiracState::default());
+    commands.insert_resource(EraControls(
+        "[P] Foton gamma\n[Setas] n/j (estrutura fina)".to_string()
+    ));
+
+    // Pré-alocar handles para partículas emitidas
+    commands.insert_resource(DiracParticleAssets {
+        electron_mesh: meshes.add(Circle::new(6.0)),
+        electron_mat: materials.add(ColorMaterial::from_color(
+            Color::srgba(0.2, 0.5, 1.0, 0.9),
+        )),
+        positron_mesh: meshes.add(Circle::new(6.0)),
+        positron_mat: materials.add(ColorMaterial::from_color(
+            Color::srgba(1.0, 0.3, 0.2, 0.9),
+        )),
+        gamma_mesh: meshes.add(Circle::new(4.0)),
+        gamma_mat: materials.add(ColorMaterial::from_color(
+            Color::srgba(1.0, 1.0, 0.3, 0.9),
+        )),
+        gamma_high_mesh: meshes.add(Circle::new(5.0)),
+        gamma_high_mat: materials.add(ColorMaterial::from_color(
+            Color::srgba(1.0, 1.0, 0.0, 0.9),
+        )),
+    });
 
     // Diagrama de energia de Dirac (visual)
     // Gap de 2mc² entre estados positivos e negativos
@@ -282,6 +318,7 @@ fn cleanup_dirac(
         commands.entity(entity).despawn();
     }
     commands.remove_resource::<DiracState>();
+    commands.remove_resource::<DiracParticleAssets>();
 }
 
 // ---------------------------------------------------------------------------
@@ -291,12 +328,12 @@ fn cleanup_dirac(
 
 fn pair_creation_system(
     mut commands: Commands,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<ColorMaterial>>,
     mut state: Option<ResMut<DiracState>>,
+    assets: Option<Res<DiracParticleAssets>>,
     gammas: Query<(Entity, &GammaPhoton, &Transform), (Without<Electron>, Without<Positron>)>,
 ) {
     let Some(ref mut state) = state else { return };
+    let Some(assets) = assets else { return };
 
     for (entity, gamma, transform) in gammas.iter() {
         if gamma.energy_mev >= PAIR_THRESHOLD_MEV && gamma.lifetime < 1.5 {
@@ -304,35 +341,25 @@ fn pair_creation_system(
             let mut rng = rand::rng();
             let spread = rng.random_range(30.0_f32..80.0);
 
-            // Elétron (azul, vai para cima-direita)
-            let e_mesh = meshes.add(Circle::new(6.0));
-            let e_mat = materials.add(ColorMaterial::from_color(
-                Color::srgba(0.2, 0.5, 1.0, 0.9),
-            ));
             commands.spawn((
                 DiracEntity,
                 Electron {
                     vel: Vec2::new(80.0, spread),
                     spin_up: rng.random_bool(0.5),
                 },
-                Mesh2d(e_mesh),
-                MeshMaterial2d(e_mat),
+                Mesh2d(assets.electron_mesh.clone()),
+                MeshMaterial2d(assets.electron_mat.clone()),
                 Transform::from_xyz(pos.x, pos.y, 3.0),
             ));
 
-            // Pósitron (vermelho, vai para baixo-direita)
-            let p_mesh = meshes.add(Circle::new(6.0));
-            let p_mat = materials.add(ColorMaterial::from_color(
-                Color::srgba(1.0, 0.3, 0.2, 0.9),
-            ));
             commands.spawn((
                 DiracEntity,
                 Positron {
                     vel: Vec2::new(80.0, -spread),
                     spin_up: !rng.random_bool(0.5),
                 },
-                Mesh2d(p_mesh),
-                MeshMaterial2d(p_mat),
+                Mesh2d(assets.positron_mesh.clone()),
+                MeshMaterial2d(assets.positron_mat.clone()),
                 Transform::from_xyz(pos.x, pos.y, 3.0),
             ));
 
@@ -348,13 +375,13 @@ fn pair_creation_system(
 
 fn annihilation_system(
     mut commands: Commands,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<ColorMaterial>>,
     mut state: Option<ResMut<DiracState>>,
+    assets: Option<Res<DiracParticleAssets>>,
     electrons: Query<(Entity, &Transform), (With<Electron>, Without<Positron>)>,
     positrons: Query<(Entity, &Transform), (With<Positron>, Without<Electron>)>,
 ) {
     let Some(ref mut state) = state else { return };
+    let Some(assets) = assets else { return };
 
     for (e_entity, e_transform) in electrons.iter() {
         for (p_entity, p_transform) in positrons.iter() {
@@ -366,12 +393,6 @@ fn annihilation_system(
             if dist < 15.0 {
                 let mid = (e_transform.translation + p_transform.translation) / 2.0;
 
-                // Emitir 2 fótons gama em direções opostas (0.511 MeV cada)
-                let gamma_mesh = meshes.add(Circle::new(4.0));
-                let gamma_mat = materials.add(ColorMaterial::from_color(
-                    Color::srgba(1.0, 1.0, 0.3, 0.9),
-                ));
-
                 for dir in [Vec2::new(150.0, 0.0), Vec2::new(-150.0, 0.0)] {
                     commands.spawn((
                         DiracEntity,
@@ -380,8 +401,8 @@ fn annihilation_system(
                             energy_mev: ELECTRON_MASS_MEV,
                             lifetime: 3.0,
                         },
-                        Mesh2d(gamma_mesh.clone()),
-                        MeshMaterial2d(gamma_mat.clone()),
+                        Mesh2d(assets.gamma_mesh.clone()),
+                        MeshMaterial2d(assets.gamma_mat.clone()),
                         Transform::from_xyz(mid.x, mid.y, 4.0),
                     ));
                 }
@@ -389,7 +410,7 @@ fn annihilation_system(
                 commands.entity(e_entity).despawn();
                 commands.entity(p_entity).despawn();
                 state.annihilations += 1;
-                return; // Uma aniquilação por frame
+                return;
             }
         }
     }
@@ -440,31 +461,27 @@ fn update_particles(
 
 fn dirac_controls(
     mut commands: Commands,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<ColorMaterial>>,
     keyboard: Res<ButtonInput<KeyCode>>,
     mut state: Option<ResMut<DiracState>>,
+    assets: Option<Res<DiracParticleAssets>>,
 ) {
     let Some(ref mut state) = state else { return };
 
     // Criar fóton gama de alta energia (para criação de pares)
     if keyboard.just_pressed(KeyCode::KeyP) {
-        let mesh = meshes.add(Circle::new(5.0));
-        let mat = materials.add(ColorMaterial::from_color(
-            Color::srgba(1.0, 1.0, 0.0, 0.9),
-        ));
-
-        commands.spawn((
-            DiracEntity,
-            GammaPhoton {
-                vel: Vec2::new(120.0, 0.0),
-                energy_mev: 2.0, // > 1.022 MeV threshold
-                lifetime: 3.0,
-            },
-            Mesh2d(mesh),
-            MeshMaterial2d(mat),
-            Transform::from_xyz(-400.0, CENTER.y, 4.0),
-        ));
+        if let Some(ref assets) = assets {
+            commands.spawn((
+                DiracEntity,
+                GammaPhoton {
+                    vel: Vec2::new(120.0, 0.0),
+                    energy_mev: 2.0, // > 1.022 MeV threshold
+                    lifetime: 3.0,
+                },
+                Mesh2d(assets.gamma_high_mesh.clone()),
+                MeshMaterial2d(assets.gamma_high_mat.clone()),
+                Transform::from_xyz(-400.0, CENTER.y, 4.0),
+            ));
+        }
     }
 
     // Ajustar n para comparação de estrutura fina
@@ -500,26 +517,17 @@ fn update_dirac_hud(
 
     let info = format!(
         "CONTROLES\n\
-         \u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\n\
-         [P] Disparar foton gamma (>1.022 MeV)\n\
-         (cria par eletron-positron)\n\
+         \u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\n\
+         [P] Foton gamma (>1.022 MeV)\n\
          [Setas] n={}, j={}/2\n\n\
-         ESTATISTICAS\n\
-         Pares criados: {}\n\
-         Aniquilacoes: {}\n\n\
-         CRIACAO DE PARES:\n\
-         gamma -> e- + e+\n\
-         Exige E_foton > 2*m_e*c^2 = 1.022 MeV\n\n\
-         ANIQUILACAO:\n\
-         e- + e+ -> 2*gamma\n\
-         Cada gamma com E = 0.511 MeV\n\n\
-         SPIN (emerge da equacao):\n\
-         J = L + S, com S = hbar/2 * Sigma\n\
-         g = 2 (automatico, nao postulado)\n\
-         QED: g = 2.002319... (Schwinger 1948)",
+         Pares: {}  Aniquilacoes: {}\n\
+         \u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\n\
+         g -> e- + e+ (E>1.022 MeV)\n\
+         e- + e+ -> 2g (0.511 MeV cada)\n\n\
+         Spin emerge da equacao: g=2\n\
+         QED: g=2.002319 (Schwinger 48)",
         state.selected_n, state.selected_j_half,
-        state.pairs_created,
-        state.annihilations,
+        state.pairs_created, state.annihilations,
     );
 
     for mut text in info_query.iter_mut() {
@@ -559,14 +567,10 @@ fn update_dirac_hud(
         j_h += 2;
     }
 
-    spectrum.push_str(&format!(
-        "\nNOTA: Dirac desdobra por j, nao l.\n\
-         Sommerfeld dava resultado correto\n\
-         por coincidencia (k -> j+1/2).\n\n\
-         LAMB SHIFT (nao previsto por Dirac):\n\
-         2S_1/2 != 2P_1/2 por ~1057 MHz\n\
-         Requer QED (Feynman/Schwinger 1948)"
-    ));
+    spectrum.push_str(
+        "\nDesdobra por j (nao l).\n\
+         Lamb shift ~1057 MHz: requer QED"
+    );
 
     for mut text in spectrum_query.iter_mut() {
         *text = Text2d::new(spectrum.clone());

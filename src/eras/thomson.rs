@@ -3,7 +3,7 @@ use rand::Rng;
 use std::f32::consts::TAU;
 
 use crate::common::{ActiveEra, SimulationState};
-use crate::common::ui::HudText;
+use crate::common::ui::{HudText, EraControls};
 use crate::physics::coulomb;
 
 pub struct ThomsonPlugin;
@@ -110,6 +110,15 @@ struct ThomsonInfoText;
 #[derive(Component)]
 struct CathodeRayInfoText;
 
+/// Handles pré-alocados para partículas emitidas (evita leak de handles).
+#[derive(Resource)]
+struct ThomsonParticleAssets {
+    cathode_mesh: Handle<Mesh>,
+    cathode_mat: Handle<ColorMaterial>,
+    alpha_mesh: Handle<Mesh>,
+    alpha_mat: Handle<ColorMaterial>,
+}
+
 // ---------------------------------------------------------------------------
 // Constants — Thomson model parameters
 // ---------------------------------------------------------------------------
@@ -155,6 +164,21 @@ fn setup_thomson(
 
     commands.init_resource::<CathodeRayConfig>();
     commands.init_resource::<AlphaTestState>();
+    commands.insert_resource(EraControls(
+        "[Setas] Campos E/B\n[F] Toggle feixe\n[A] Teste alfa".to_string()
+    ));
+
+    // Pré-alocar handles para partículas emitidas
+    commands.insert_resource(ThomsonParticleAssets {
+        cathode_mesh: meshes.add(Circle::new(3.0)),
+        cathode_mat: materials.add(ColorMaterial::from_color(
+            Color::srgba(0.3, 0.6, 1.0, 0.9),
+        )),
+        alpha_mesh: meshes.add(Circle::new(5.0)),
+        alpha_mat: materials.add(ColorMaterial::from_color(
+            Color::srgba(1.0, 0.8, 0.2, 0.9),
+        )),
+    });
 
     // --- Pudim de passas (lado esquerdo) ---
 
@@ -301,6 +325,7 @@ fn cleanup_thomson(
     }
     commands.remove_resource::<CathodeRayConfig>();
     commands.remove_resource::<AlphaTestState>();
+    commands.remove_resource::<ThomsonParticleAssets>();
 }
 
 // ---------------------------------------------------------------------------
@@ -347,12 +372,12 @@ fn electron_oscillation(
 fn cathode_ray_simulation(
     mut commands: Commands,
     time: Res<Time>,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<ColorMaterial>>,
     config: Option<Res<CathodeRayConfig>>,
+    assets: Option<Res<ThomsonParticleAssets>>,
     mut particles: Query<(Entity, &mut CathodeRayParticle, &mut Transform), Without<AlphaParticle>>,
 ) {
     let Some(config) = config else { return };
+    let Some(assets) = assets else { return };
     let dt = time.delta_secs();
 
     // Emitir novas partículas
@@ -361,10 +386,6 @@ fn cathode_ray_simulation(
         let rate = 0.05;
         let elapsed = time.elapsed_secs();
         if (elapsed % rate) < dt {
-            let mesh = meshes.add(Circle::new(3.0));
-            let mat = materials.add(ColorMaterial::from_color(
-                Color::srgba(0.3, 0.6, 1.0, 0.9),
-            ));
             let mut rng = rand::rng();
             let y_spread = rng.random_range(-3.0..3.0);
 
@@ -373,8 +394,8 @@ fn cathode_ray_simulation(
                 CathodeRayParticle {
                     vel: Vec2::new(300.0, 0.0), // Velocidade horizontal
                 },
-                Mesh2d(mesh),
-                MeshMaterial2d(mat),
+                Mesh2d(assets.cathode_mesh.clone()),
+                MeshMaterial2d(assets.cathode_mat.clone()),
                 Transform::from_xyz(TUBE_LEFT + 10.0, TUBE_CENTER_Y + y_spread, 2.0),
             ));
         }
@@ -420,13 +441,13 @@ fn cathode_ray_simulation(
 fn alpha_particle_test(
     mut commands: Commands,
     time: Res<Time>,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<ColorMaterial>>,
     mut alpha_state: Option<ResMut<AlphaTestState>>,
+    assets: Option<Res<ThomsonParticleAssets>>,
     mut alphas: Query<(Entity, &mut AlphaParticle, &mut Transform)>,
 ) {
     let Some(ref mut alpha_state) = alpha_state else { return };
     if !alpha_state.active { return; }
+    let Some(assets) = assets else { return };
 
     let dt = time.delta_secs();
     alpha_state.fire_timer += dt;
@@ -434,10 +455,6 @@ fn alpha_particle_test(
     // Emitir partículas alfa da direita
     if alpha_state.fire_timer > 0.15 {
         alpha_state.fire_timer = 0.0;
-        let mesh = meshes.add(Circle::new(5.0));
-        let mat = materials.add(ColorMaterial::from_color(
-            Color::srgba(1.0, 0.8, 0.2, 0.9), // Amarelo/dourado
-        ));
         let mut rng = rand::rng();
         let y = PUDDING_CENTER.y + rng.random_range(-PUDDING_RADIUS..PUDDING_RADIUS);
 
@@ -446,8 +463,8 @@ fn alpha_particle_test(
             AlphaParticle {
                 vel: Vec2::new(-250.0, 0.0), // Vindo da direita
             },
-            Mesh2d(mesh),
-            MeshMaterial2d(mat),
+            Mesh2d(assets.alpha_mesh.clone()),
+            MeshMaterial2d(assets.alpha_mat.clone()),
             Transform::from_xyz(PUDDING_CENTER.x + PUDDING_RADIUS + 200.0, y, 3.0),
         ));
     }

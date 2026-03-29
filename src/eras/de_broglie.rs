@@ -2,7 +2,7 @@ use bevy::prelude::*;
 use std::f32::consts::TAU;
 
 use crate::common::{ActiveEra, SimulationState};
-use crate::common::ui::HudText;
+use crate::common::ui::{HudText, EraControls};
 
 pub struct DeBrogliePlugin;
 
@@ -59,6 +59,15 @@ struct DeBroglieInfoText;
 
 #[derive(Component)]
 struct SlitInfoText;
+
+/// Handles pré-alocados para partículas emitidas (evita leak de handles).
+#[derive(Resource)]
+struct DeBroglieParticleAssets {
+    slit_particle_mesh: Handle<Mesh>,
+    slit_particle_mat: Handle<ColorMaterial>,
+    detection_mesh: Handle<Mesh>,
+    detection_mat: Handle<ColorMaterial>,
+}
 
 // ---------------------------------------------------------------------------
 // Resources
@@ -128,6 +137,21 @@ fn setup_de_broglie(
     }
 
     commands.insert_resource(DeBroglieState::default());
+    commands.insert_resource(EraControls(
+        "[Setas] n (0.5 em 0.5)\n[Q,W,R] n=1,2,4  [F] n=2.5\n[D] Fenda dupla".to_string()
+    ));
+
+    // Pré-alocar handles para partículas da fenda dupla
+    commands.insert_resource(DeBroglieParticleAssets {
+        slit_particle_mesh: meshes.add(Circle::new(2.0)),
+        slit_particle_mat: materials.add(ColorMaterial::from_color(
+            Color::srgba(0.3, 0.6, 1.0, 0.8),
+        )),
+        detection_mesh: meshes.add(Circle::new(1.5)),
+        detection_mat: materials.add(ColorMaterial::from_color(
+            Color::srgba(0.4, 0.8, 1.0, 0.7),
+        )),
+    });
 
     // Núcleo
     commands.spawn((
@@ -248,6 +272,7 @@ fn cleanup_de_broglie(
         commands.entity(entity).despawn();
     }
     commands.remove_resource::<DeBroglieState>();
+    commands.remove_resource::<DeBroglieParticleAssets>();
 }
 
 // ---------------------------------------------------------------------------
@@ -312,13 +337,13 @@ fn animate_standing_wave(
 fn double_slit_simulation(
     mut commands: Commands,
     time: Res<Time>,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<ColorMaterial>>,
     mut state: Option<ResMut<DeBroglieState>>,
+    assets: Option<Res<DeBroglieParticleAssets>>,
     mut particles: Query<(Entity, &mut SlitParticle, &mut Transform)>,
 ) {
     let Some(ref mut state) = state else { return };
     if !state.slit_active { return; }
+    let Some(assets) = assets else { return };
 
     let dt = time.delta_secs();
     state.slit_fire_timer += dt;
@@ -326,10 +351,6 @@ fn double_slit_simulation(
     // Emitir elétrons
     if state.slit_fire_timer > 0.08 {
         state.slit_fire_timer = 0.0;
-        let mesh = meshes.add(Circle::new(2.0));
-        let mat = materials.add(ColorMaterial::from_color(
-            Color::srgba(0.3, 0.6, 1.0, 0.8),
-        ));
 
         let mut rng = rand::rng();
         let y_start = SLIT_Y + rng.random_range(-5.0_f32..5.0);
@@ -340,8 +361,8 @@ fn double_slit_simulation(
                 vel: Vec2::new(200.0, 0.0),
                 phase: rng.random_range(0.0_f32..TAU),
             },
-            Mesh2d(mesh),
-            MeshMaterial2d(mat),
+            Mesh2d(assets.slit_particle_mesh.clone()),
+            MeshMaterial2d(assets.slit_particle_mat.clone()),
             Transform::from_xyz(SLIT_X - 100.0, y_start, 3.0),
         ));
     }
@@ -376,15 +397,11 @@ fn double_slit_simulation(
             let mut rng = rand::rng();
             if rng.random_range(0.0_f32..1.0) < prob {
                 // Detectado — criar ponto permanente
-                let dot_mesh = meshes.add(Circle::new(1.5));
-                let dot_mat = materials.add(ColorMaterial::from_color(
-                    Color::srgba(0.4, 0.8, 1.0, 0.7),
-                ));
                 commands.spawn((
                     DeBroglieEntity,
                     DetectionDot,
-                    Mesh2d(dot_mesh),
-                    MeshMaterial2d(dot_mat),
+                    Mesh2d(assets.detection_mesh.clone()),
+                    MeshMaterial2d(assets.detection_mat.clone()),
                     Transform::from_xyz(
                         SCREEN_X + rng.random_range(1.0_f32..8.0),
                         transform.translation.y,

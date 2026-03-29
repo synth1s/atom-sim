@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 
 use crate::common::{ActiveEra, SimulationState};
-use crate::common::ui::HudText;
+use crate::common::ui::{HudText, EraControls};
 use crate::physics::spectral;
 
 pub struct SommerfeldPlugin;
@@ -48,6 +48,10 @@ struct SommerfeldInfoText;
 
 #[derive(Component)]
 struct EnergyDetailText;
+
+/// Marcador para segmentos de órbita (redesenhados quando n/k mudam).
+#[derive(Component)]
+struct OrbitSegment;
 
 // ---------------------------------------------------------------------------
 // Resources
@@ -149,6 +153,9 @@ fn setup_sommerfeld(
     }
 
     commands.insert_resource(SommerfeldState::default());
+    commands.insert_resource(EraControls(
+        "[Setas] n/k  [M] m\n[B/V] Campo magnetico".to_string()
+    ));
 
     // Núcleo
     commands.spawn((
@@ -236,6 +243,7 @@ fn draw_orbits(
 
             commands.spawn((
                 SommerfeldEntity,
+                OrbitSegment,
                 Mesh2d(meshes.add(Rectangle::new(len, 1.0))),
                 MeshMaterial2d(materials.add(ColorMaterial::from_color(color))),
                 Transform::from_xyz(mid.x, mid.y, 0.5)
@@ -254,6 +262,7 @@ fn draw_orbits(
         };
         commands.spawn((
             SommerfeldEntity,
+            OrbitSegment,
             Text2d::new(format!("k={} ({})", k, sublabel)),
             TextFont { font_size: 10.0, ..default() },
             TextColor(color.with_alpha(0.8)),
@@ -322,10 +331,16 @@ fn orbit_electron_elliptical(
 // ---------------------------------------------------------------------------
 
 fn sommerfeld_controls(
+    mut commands: Commands,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<ColorMaterial>>,
     keyboard: Res<ButtonInput<KeyCode>>,
     state: Option<ResMut<SommerfeldState>>,
+    orbit_segments: Query<Entity, With<OrbitSegment>>,
 ) {
     let Some(mut state) = state else { return };
+
+    let old_n = state.n;
 
     // n: principal quantum number
     if keyboard.just_pressed(KeyCode::ArrowUp) && state.n < 6 {
@@ -361,6 +376,13 @@ fn sommerfeld_controls(
         state.b_field = (state.b_field - 0.5).max(0.0);
     }
 
+    // Redesenhar órbitas quando n muda
+    if state.n != old_n {
+        for entity in orbit_segments.iter() {
+            commands.entity(entity).despawn();
+        }
+        draw_orbits(&mut commands, &mut meshes, &mut materials, state.n);
+    }
 }
 
 // ---------------------------------------------------------------------------
@@ -382,17 +404,11 @@ fn update_sommerfeld_hud(
 
     let info = format!(
         "CONTROLES\n\
-         [Setas Cima/Baixo] n = {} (principal)\n\
-         [Setas Esq/Dir] k = {} (azimutal)\n\
-         [M] m = {} (magnetico, -{} a +{})\n\
-         [B/V] Campo B = {:.1} T\n\n\
-         ORBITA ATUAL\n\
          \u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\n\
-         Excentricidade: {:.4}\n\
-         Semi-eixo maior: {:.1} (a0)\n\
-         Semi-eixo menor: {:.1} (a0)\n\
-         k=n: circular (Bohr)\n\
-         k<n: elipse (Sommerfeld)",
+         [Cima/Baixo] n={}  [Esq/Dir] k={}\n\
+         [M] m={} (-{}..+{})  [B/V] B={:.1}T\n\n\
+         ORBITA: e={:.3} a={:.1}a0 b={:.1}a0\n\
+         k=n: circular | k<n: elipse",
         state.n, state.k, state.m, state.k, state.k,
         state.b_field,
         ecc, a / ORBIT_SCALE, b / ORBIT_SCALE,
@@ -425,13 +441,8 @@ fn update_sommerfeld_hud(
     }
 
     energy_text.push_str(&format!(
-        "\n\nCONSTANTE DE ESTRUTURA FINA\n\
-         a = e^2/(4*pi*e0*hbar*c)\n\
-         a = 1/{:.3}\n\
-         a^2 = {:.2e}\n\n\
-         COINCIDENCIA DE SOMMERFELD:\n\
-         Formula correta, motivo errado!\n\
-         Dirac (1928): substituir k por j+1/2",
+        "\na = 1/{:.3} (a^2={:.2e})\n\
+         Coincidencia: k -> j+1/2 (Dirac)",
         1.0 / FINE_STRUCTURE_ALPHA,
         FINE_STRUCTURE_ALPHA * FINE_STRUCTURE_ALPHA,
     ));

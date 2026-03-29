@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 use crate::common::{ActiveEra, SimulationState};
-use crate::common::ui::HudText;
+use crate::common::ui::{HudText, EraControls};
 use crate::physics::spectral;
 
 pub struct BohrPlugin;
@@ -70,6 +70,13 @@ struct EnergyDiagramText;
 #[derive(Component)]
 struct SpectrumLabel;
 
+/// Handles pré-alocados para partículas emitidas (evita leak de handles).
+#[derive(Resource)]
+struct BohrParticleAssets {
+    photon_mesh: Handle<Mesh>,
+    spectral_line_mesh: Handle<Mesh>,
+}
+
 // ---------------------------------------------------------------------------
 // Resources
 // ---------------------------------------------------------------------------
@@ -131,6 +138,15 @@ fn setup_bohr(
     }
 
     commands.insert_resource(BohrState::default());
+    commands.insert_resource(EraControls(
+        "[Setas] Mudar orbita\n[Q,W,R,T,Y] Saltar n=1,2,4,5,6".to_string()
+    ));
+
+    // Pré-alocar handles para partículas emitidas
+    commands.insert_resource(BohrParticleAssets {
+        photon_mesh: meshes.add(Circle::new(4.0)),
+        spectral_line_mesh: meshes.add(Rectangle::new(2.0, 30.0)),
+    });
 
     // Núcleo
     commands.spawn((
@@ -238,6 +254,7 @@ fn cleanup_bohr(
         commands.entity(entity).despawn();
     }
     commands.remove_resource::<BohrState>();
+    commands.remove_resource::<BohrParticleAssets>();
 }
 
 // ---------------------------------------------------------------------------
@@ -294,9 +311,9 @@ fn update_photons(
 fn bohr_controls(
     keyboard: Res<ButtonInput<KeyCode>>,
     mut commands: Commands,
-    mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
     mut bohr_state: Option<ResMut<BohrState>>,
+    assets: Option<Res<BohrParticleAssets>>,
     electron_query: Query<&Transform, With<BohrElectron>>,
 ) {
     let Some(ref mut state) = bohr_state else { return };
@@ -324,44 +341,48 @@ fn bohr_controls(
 
         // Se desceu (emissão), criar fóton
         if new_n < old_n {
-            let wavelength_m = spectral::transition_wavelength(old_n, new_n);
-            let wavelength_nm = wavelength_m * 1e9;
-            let color = spectral::wavelength_to_color(wavelength_nm);
+            if let Some(ref assets) = assets {
+                let wavelength_m = spectral::transition_wavelength(old_n, new_n);
+                let wavelength_nm = wavelength_m * 1e9;
+                let color = spectral::wavelength_to_color(wavelength_nm);
 
-            // Posição do elétron no momento da transição
-            let electron_pos = electron_query
-                .iter()
-                .next()
-                .map(|t| t.translation.truncate())
-                .unwrap_or(NUCLEUS_POS);
+                // Posição do elétron no momento da transição
+                let electron_pos = electron_query
+                    .iter()
+                    .next()
+                    .map(|t| t.translation.truncate())
+                    .unwrap_or(NUCLEUS_POS);
 
-            // Emitir fóton em direção radial
-            let dir = (electron_pos - NUCLEUS_POS).normalize_or_zero();
-            let photon_speed = 200.0;
+                // Emitir fóton em direção radial
+                let dir = (electron_pos - NUCLEUS_POS).normalize_or_zero();
+                let photon_speed = 200.0;
 
-            commands.spawn((
-                BohrEntity,
-                Photon {
-                    vel: dir * photon_speed,
-                    lifetime: 3.0,
-                },
-                Mesh2d(meshes.add(Circle::new(4.0))),
-                MeshMaterial2d(materials.add(ColorMaterial::from_color(color))),
-                Transform::from_xyz(electron_pos.x, electron_pos.y, 4.0),
-            ));
+                let color_mat = materials.add(ColorMaterial::from_color(color));
 
-            // Adicionar linha espectral ao espectrógrafo
-            let x_pos = wavelength_to_spectrum_x(wavelength_nm);
-            commands.spawn((
-                BohrEntity,
-                SpectralLine,
-                Mesh2d(meshes.add(Rectangle::new(2.0, 30.0))),
-                MeshMaterial2d(materials.add(ColorMaterial::from_color(color))),
-                Transform::from_xyz(x_pos, SPECTRUM_Y, 5.0),
-            ));
+                commands.spawn((
+                    BohrEntity,
+                    Photon {
+                        vel: dir * photon_speed,
+                        lifetime: 3.0,
+                    },
+                    Mesh2d(assets.photon_mesh.clone()),
+                    MeshMaterial2d(color_mat.clone()),
+                    Transform::from_xyz(electron_pos.x, electron_pos.y, 4.0),
+                ));
 
-            // Registrar transição
-            state.transitions_recorded.push((old_n, new_n, wavelength_nm));
+                // Adicionar linha espectral ao espectrógrafo
+                let x_pos = wavelength_to_spectrum_x(wavelength_nm);
+                commands.spawn((
+                    BohrEntity,
+                    SpectralLine,
+                    Mesh2d(assets.spectral_line_mesh.clone()),
+                    MeshMaterial2d(color_mat),
+                    Transform::from_xyz(x_pos, SPECTRUM_Y, 5.0),
+                ));
+
+                // Registrar transição
+                state.transitions_recorded.push((old_n, new_n, wavelength_nm));
+            }
         }
     }
 }

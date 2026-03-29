@@ -2,7 +2,7 @@ use bevy::prelude::*;
 use rand::Rng;
 
 use crate::common::{ActiveEra, Arena, HudPlugin, SimulationState};
-use crate::common::ui::HudText;
+use crate::common::ui::{HudText, EraControls};
 use crate::physics::classical::{self, Mass, Radius, Velocity};
 
 pub struct DemocritusPlugin;
@@ -78,6 +78,8 @@ fn setup_democritus(
              Como explicar a diversidade da materia?"
         );
     }
+
+    commands.insert_resource(EraControls("[Clique] Adicionar atomo".to_string()));
 
     // Arena walls
     let wall_color = Color::srgba(0.3, 0.3, 0.35, 0.6);

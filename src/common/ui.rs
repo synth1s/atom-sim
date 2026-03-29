@@ -5,8 +5,9 @@ pub struct HudPlugin;
 
 impl Plugin for HudPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Startup, spawn_hud)
-            .add_systems(Update, (update_status_hud, toggle_pause, switch_era));
+        app.init_resource::<EraControls>()
+            .add_systems(Startup, spawn_hud)
+            .add_systems(Update, (update_status_hud, update_controls_hud, toggle_pause, switch_era));
     }
 }
 
@@ -21,6 +22,10 @@ struct StatusText;
 /// Marcador para o texto de controles.
 #[derive(Component)]
 struct ControlsText;
+
+/// Resource com controles específicos da era atual.
+#[derive(Resource, Default)]
+pub struct EraControls(pub String);
 
 fn spawn_hud(mut commands: Commands) {
     // Título e contexto histórico (topo esquerdo) — será atualizado por cada era
@@ -83,6 +88,28 @@ fn update_status_hud(
                 *color = TextColor(Color::srgba(1.0, 0.4, 0.4, 0.9));
             }
         }
+    }
+}
+
+fn update_controls_hud(
+    era_controls: Res<EraControls>,
+    mut query: Query<&mut Text2d, With<ControlsText>>,
+) {
+    if !era_controls.is_changed() { return; }
+
+    let base = "CONTROLES:\n\
+                [Espaco] Pausar/Retomar\n\
+                [Scroll] Zoom\n\
+                [1-9] Trocar era";
+
+    let full = if era_controls.0.is_empty() {
+        base.to_string()
+    } else {
+        format!("{}\n{}", base, era_controls.0)
+    };
+
+    for mut text in query.iter_mut() {
+        *text = Text2d::new(full.clone());
     }
 }
 

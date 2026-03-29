@@ -2,7 +2,7 @@ use bevy::prelude::*;
 use rand::Rng;
 
 use crate::common::{ActiveEra, Arena, SimulationState};
-use crate::common::ui::HudText;
+use crate::common::ui::{HudText, EraControls};
 use crate::physics::classical::{self, Mass, Radius, Velocity};
 
 pub struct DaltonPlugin;
@@ -65,7 +65,7 @@ impl Element {
     pub fn color(self) -> Color {
         match self {
             Element::Hydrogen => Color::srgba(0.9, 0.9, 0.95, 0.95),  // Branco azulado
-            Element::Carbon => Color::srgba(0.25, 0.25, 0.25, 0.95),  // Preto/cinza escuro
+            Element::Carbon => Color::srgba(0.45, 0.45, 0.45, 0.95),  // Cinza médio visível
             Element::Nitrogen => Color::srgba(0.3, 0.5, 0.9, 0.95),   // Azul
             Element::Oxygen => Color::srgba(0.9, 0.25, 0.2, 0.95),    // Vermelho
         }
@@ -140,6 +140,19 @@ struct DaltonInfoText;
 #[derive(Component)]
 struct SelectedElementText;
 
+/// Cached mesh/material handles to avoid leaking new handles every frame.
+#[derive(Resource)]
+struct DaltonParticleAssets {
+    /// Unit circle mesh (radius 1.0) — use `Transform::with_scale` to size.
+    molecule_mesh: Handle<Mesh>,
+    /// Green material for molecules.
+    molecule_mat: Handle<ColorMaterial>,
+    /// Per-element mesh (already sized to `element.radius()`).
+    elem_mesh: std::collections::HashMap<Element, Handle<Mesh>>,
+    /// Per-element material.
+    elem_mat: std::collections::HashMap<Element, Handle<ColorMaterial>>,
+}
+
 const MAX_INITIAL_SPEED: f32 = 150.0;
 
 // ---------------------------------------------------------------------------
@@ -167,6 +180,7 @@ fn setup_dalton(
 
     commands.init_resource::<SelectedElement>();
     commands.insert_resource(AtomCounts::default());
+    commands.insert_resource(EraControls("[E] Trocar elemento\n[Clique] Adicionar atomo".to_string()));
 
     // Arena walls
     let wall_color = Color::srgba(0.3, 0.3, 0.35, 0.6);
@@ -213,6 +227,26 @@ fn setup_dalton(
         TextLayout::new_with_justify(Justify::Left),
     ));
 
+    // Build cached particle assets (avoids leaking handles each frame)
+    let all_elements = [
+        Element::Hydrogen,
+        Element::Carbon,
+        Element::Nitrogen,
+        Element::Oxygen,
+    ];
+    let mut elem_mesh = std::collections::HashMap::new();
+    let mut elem_mat = std::collections::HashMap::new();
+    for &el in &all_elements {
+        elem_mesh.insert(el, meshes.add(Circle::new(el.radius())));
+        elem_mat.insert(el, materials.add(ColorMaterial::from_color(el.color())));
+    }
+    let particle_assets = DaltonParticleAssets {
+        molecule_mesh: meshes.add(Circle::new(1.0)),
+        molecule_mat: materials.add(ColorMaterial::from_color(Color::srgba(0.6, 0.8, 0.3, 0.9))),
+        elem_mesh,
+        elem_mat,
+    };
+
     // Spawn initial atoms — a mix of elements
     let mut rng = rand::rng();
     let margin = 20.0;
@@ -227,8 +261,8 @@ fn setup_dalton(
 
     for (element, count) in spawn_list {
         let r = element.radius();
-        let mesh_handle = meshes.add(Circle::new(r));
-        let mat_handle = materials.add(ColorMaterial::from_color(element.color()));
+        let mesh_handle = particle_assets.elem_mesh[&element].clone();
+        let mat_handle = particle_assets.elem_mat[&element].clone();
 
         for _ in 0..count {
             let x = rng.random_range((-arena.half_width + margin)..(arena.half_width - margin));
@@ -250,6 +284,7 @@ fn setup_dalton(
         }
     }
 
+    commands.insert_resource(particle_assets);
     commands.insert_resource(counts);
 }
 
@@ -262,6 +297,7 @@ fn cleanup_dalton(
     }
     commands.remove_resource::<SelectedElement>();
     commands.remove_resource::<AtomCounts>();
+    commands.remove_resource::<DaltonParticleAssets>();
 }
 
 // ---------------------------------------------------------------------------
@@ -275,12 +311,12 @@ fn cleanup_dalton(
 
 fn check_reactions(
     mut commands: Commands,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<ColorMaterial>>,
+    assets: Option<Res<DaltonParticleAssets>>,
     query: Query<(Entity, &Transform, &Element, &Radius, &Velocity), Without<Molecule>>,
     mut counts: Option<ResMut<AtomCounts>>,
 ) {
     let Some(ref mut counts) = counts else { return };
+    let Some(assets) = assets else { return };
 
     let atoms: Vec<_> = query.iter().collect();
     let n = atoms.len();
@@ -306,14 +342,14 @@ fn check_reactions(
                     let mol_mass = el1.dalton_mass() + el2.dalton_mass();
                     let mol_radius = (r1.0 + r2.0) * 0.7;
 
-                    // Visual: a compound-colored circle
-                    let mol_color = Color::srgba(0.6, 0.8, 0.3, 0.9);
+                    // Reuse cached unit-circle mesh; scale transform to desired radius
                     commands.spawn((
                         DaltonEntity,
                         Molecule { formula: formula.to_string() },
-                        Mesh2d(meshes.add(Circle::new(mol_radius))),
-                        MeshMaterial2d(materials.add(ColorMaterial::from_color(mol_color))),
-                        Transform::from_xyz(midpoint.x, midpoint.y, 2.0),
+                        Mesh2d(assets.molecule_mesh.clone()),
+                        MeshMaterial2d(assets.molecule_mat.clone()),
+                        Transform::from_xyz(midpoint.x, midpoint.y, 2.0)
+                            .with_scale(Vec3::splat(mol_radius)),
                         Velocity(avg_vel),
                         Radius(mol_radius),
                         Mass(mol_mass),
@@ -372,17 +408,17 @@ fn cycle_selected_element(
 
 fn spawn_atom_on_click(
     mut commands: Commands,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<ColorMaterial>>,
     mouse_button: Res<ButtonInput<MouseButton>>,
     windows: Query<&Window>,
     camera_query: Query<(&Camera, &GlobalTransform), With<Camera2d>>,
     arena: Res<Arena>,
     selected: Option<Res<SelectedElement>>,
+    assets: Option<Res<DaltonParticleAssets>>,
     mut counts: Option<ResMut<AtomCounts>>,
 ) {
     if !mouse_button.just_pressed(MouseButton::Left) { return; }
     let Some(selected) = selected else { return };
+    let Some(assets) = assets else { return };
     let Some(ref mut counts) = counts else { return };
     let Ok(window) = windows.single() else { return };
     let Some(cursor_pos) = window.cursor_position() else { return };
@@ -406,8 +442,8 @@ fn spawn_atom_on_click(
     commands.spawn((
         DaltonEntity,
         element,
-        Mesh2d(meshes.add(Circle::new(r))),
-        MeshMaterial2d(materials.add(ColorMaterial::from_color(element.color()))),
+        Mesh2d(assets.elem_mesh[&element].clone()),
+        MeshMaterial2d(assets.elem_mat[&element].clone()),
         Transform::from_xyz(world_pos.x, world_pos.y, 1.0),
         Velocity(Vec2::new(angle.cos() * speed, angle.sin() * speed)),
         Radius(r),

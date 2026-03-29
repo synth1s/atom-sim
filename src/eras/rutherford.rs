@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 use rand::Rng;
 use crate::common::{ActiveEra, SimulationState};
-use crate::common::ui::HudText;
+use crate::common::ui::{HudText, EraControls};
 
 pub struct RutherfordPlugin;
 
@@ -110,6 +110,17 @@ struct RutherfordInfoText;
 #[derive(Component)]
 struct HistogramBar(usize); // index do bin
 
+/// Handles pré-alocados para partículas emitidas (evita leak de handles).
+#[derive(Resource)]
+struct RutherfordParticleAssets {
+    alpha_mesh: Handle<Mesh>,
+    alpha_mat: Handle<ColorMaterial>,
+    trail_mesh: Handle<Mesh>,
+    trail_mat_gray: Handle<ColorMaterial>,
+    trail_mat_orange: Handle<ColorMaterial>,
+    trail_mat_red: Handle<ColorMaterial>,
+}
+
 // ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
@@ -152,6 +163,27 @@ fn setup_rutherford(
 
     commands.init_resource::<ExperimentConfig>();
     commands.insert_resource(DeflectionHistogram::default());
+    commands.insert_resource(EraControls(
+        "[Setas] Velocidade alfa\n[F] Toggle disparos\n[C] Colapso classico".to_string()
+    ));
+
+    // Pré-alocar handles para partículas emitidas
+    commands.insert_resource(RutherfordParticleAssets {
+        alpha_mesh: meshes.add(Circle::new(3.5)),
+        alpha_mat: materials.add(ColorMaterial::from_color(
+            Color::srgba(1.0, 0.85, 0.2, 0.9),
+        )),
+        trail_mesh: meshes.add(Rectangle::new(6.0, 1.0)),
+        trail_mat_gray: materials.add(ColorMaterial::from_color(
+            Color::srgba(0.5, 0.5, 0.5, 0.15),
+        )),
+        trail_mat_orange: materials.add(ColorMaterial::from_color(
+            Color::srgba(1.0, 0.7, 0.2, 0.3),
+        )),
+        trail_mat_red: materials.add(ColorMaterial::from_color(
+            Color::srgba(1.0, 0.2, 0.2, 0.4),
+        )),
+    });
 
     // Núcleo — ponto vermelho minúsculo
     commands.spawn((
@@ -260,6 +292,7 @@ fn cleanup_rutherford(
     }
     commands.remove_resource::<ExperimentConfig>();
     commands.remove_resource::<DeflectionHistogram>();
+    commands.remove_resource::<RutherfordParticleAssets>();
 }
 
 // ---------------------------------------------------------------------------
@@ -278,26 +311,20 @@ fn cleanup_rutherford(
 fn fire_alpha_particles(
     mut commands: Commands,
     time: Res<Time>,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<ColorMaterial>>,
     mut config: Option<ResMut<ExperimentConfig>>,
+    assets: Option<Res<RutherfordParticleAssets>>,
 ) {
     let Some(ref mut config) = config else { return };
     if !config.firing { return; }
+    let Some(assets) = assets else { return };
 
     let dt = time.delta_secs();
     config.fire_timer += dt;
 
     if config.fire_timer > 0.12 {
         config.fire_timer = 0.0;
-        let mesh = meshes.add(Circle::new(3.5));
-        let mat = materials.add(ColorMaterial::from_color(
-            Color::srgba(1.0, 0.85, 0.2, 0.9),
-        ));
 
         let mut rng = rand::rng();
-        // Parâmetro de impacto aleatório: distribuição uniforme em b
-        // (como numa folha real, as alfas chegam com b aleatório)
         let impact_param = rng.random_range(-ATOM_VISUAL_RADIUS..ATOM_VISUAL_RADIUS);
 
         commands.spawn((
@@ -306,8 +333,8 @@ fn fire_alpha_particles(
                 vel: Vec2::new(-config.alpha_speed, 0.0),
                 trail: Vec::new(),
             },
-            Mesh2d(mesh),
-            MeshMaterial2d(mat),
+            Mesh2d(assets.alpha_mesh.clone()),
+            MeshMaterial2d(assets.alpha_mat.clone()),
             Transform::from_xyz(ALPHA_SPAWN_X, NUCLEUS_POS.y + impact_param, 3.0),
         ));
     }
@@ -316,8 +343,7 @@ fn fire_alpha_particles(
 fn update_alpha_particles(
     mut commands: Commands,
     time: Res<Time>,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<ColorMaterial>>,
+    assets: Option<Res<RutherfordParticleAssets>>,
     mut histogram: Option<ResMut<DeflectionHistogram>>,
     mut query: Query<(Entity, &mut AlphaParticle, &mut Transform)>,
 ) {
@@ -368,29 +394,31 @@ fn update_alpha_particles(
                 histogram.backscattered += 1;
             }
 
-            // Desenhar trail antes de remover
-            let trail_color = if angle_deg > 90.0 {
-                Color::srgba(1.0, 0.2, 0.2, 0.4) // Vermelho para retroespalhadas
-            } else if angle_deg > 30.0 {
-                Color::srgba(1.0, 0.7, 0.2, 0.3) // Laranja para deflexão significativa
-            } else {
-                Color::srgba(0.5, 0.5, 0.5, 0.15) // Cinza para passagem direta
-            };
+            // Desenhar trail antes de remover (usando handles pré-alocados)
+            if let Some(ref assets) = assets {
+                let trail_mat = if angle_deg > 90.0 {
+                    assets.trail_mat_red.clone()
+                } else if angle_deg > 30.0 {
+                    assets.trail_mat_orange.clone()
+                } else {
+                    assets.trail_mat_gray.clone()
+                };
 
-            // Renderizar trail como segmentos
-            for window in alpha.trail.windows(3) {
-                let mid = (window[0] + window[2]) / 2.0;
-                let dir = window[2] - window[0];
-                let len = dir.length();
-                if len > 1.0 {
-                    let angle = dir.y.atan2(dir.x);
-                    commands.spawn((
-                        RutherfordEntity,
-                        Mesh2d(meshes.add(Rectangle::new(len, 1.0))),
-                        MeshMaterial2d(materials.add(ColorMaterial::from_color(trail_color))),
-                        Transform::from_xyz(mid.x, mid.y, 0.5)
-                            .with_rotation(Quat::from_rotation_z(angle)),
-                    ));
+                for window in alpha.trail.windows(3) {
+                    let mid = (window[0] + window[2]) / 2.0;
+                    let dir = window[2] - window[0];
+                    let len = dir.length();
+                    if len > 1.0 {
+                        let angle = dir.y.atan2(dir.x);
+                        commands.spawn((
+                            RutherfordEntity,
+                            Mesh2d(assets.trail_mesh.clone()),
+                            MeshMaterial2d(trail_mat.clone()),
+                            Transform::from_xyz(mid.x, mid.y, 0.5)
+                                .with_rotation(Quat::from_rotation_z(angle))
+                                .with_scale(Vec3::new(len / 6.0, 1.0, 1.0)),
+                        ));
+                    }
                 }
             }
 

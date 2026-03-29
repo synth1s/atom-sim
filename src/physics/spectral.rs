@@ -94,6 +94,51 @@ pub fn wavelength_to_color(lambda_nm: f64) -> Color {
     Color::srgba(r as f32, g as f32, b as f32, 0.95)
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_bohr_energy_ground_state() {
+        let e = bohr_energy(1);
+        assert!((e - (-13.605693)).abs() < 0.001, "E(1) = {}", e);
+    }
+
+    #[test]
+    fn test_bohr_energy_n2() {
+        let e = bohr_energy(2);
+        let expected = -13.605693 / 4.0;
+        assert!((e - expected).abs() < 0.001, "E(2) = {}", e);
+    }
+
+    #[test]
+    fn test_bohr_radius_ground_state() {
+        let r = bohr_radius(1);
+        assert!((r - 5.291_772_109e-11).abs() < 1e-15, "r(1) = {}", r);
+    }
+
+    #[test]
+    fn test_hydrogen_balmer_alpha() {
+        // Transição 3 -> 2: λ ≈ 656.3 nm
+        let lambda = transition_wavelength(3, 2);
+        let lambda_nm = lambda * 1e9;
+        assert!((lambda_nm - 656.3).abs() < 1.0, "Balmer alpha = {} nm", lambda_nm);
+    }
+
+    #[test]
+    fn test_hydrogen_lyman_alpha() {
+        // Transição 2 -> 1: λ ≈ 121.5 nm
+        let lambda = transition_wavelength(2, 1);
+        let lambda_nm = lambda * 1e9;
+        assert!((lambda_nm - 121.5).abs() < 1.0, "Lyman alpha = {} nm", lambda_nm);
+    }
+
+    #[test]
+    fn test_rydberg_constant() {
+        assert!((RYDBERG_CONSTANT - 1.0974e7).abs() < 1e4, "R_H = {}", RYDBERG_CONSTANT);
+    }
+}
+
 /// Nome da série espectral baseado no nível inferior.
 pub fn series_name(n_lower: u32) -> &'static str {
     match n_lower {

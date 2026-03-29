@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 
 use crate::common::{ActiveEra, SimulationState};
-use crate::common::ui::HudText;
+use crate::common::ui::{HudText, EraControls};
 use crate::physics::{quantum, spectral};
 
 pub struct SchrodingerPlugin;
@@ -103,6 +103,9 @@ fn setup_schrodinger(
     }
 
     commands.insert_resource(SchrodingerState::default());
+    commands.insert_resource(EraControls(
+        "[Setas] n/l  [M] m\n[Clique] Medir (colapso)".to_string()
+    ));
 
     // Núcleo
     commands.spawn((
@@ -306,36 +309,21 @@ fn update_schrodinger_hud(
 
     let info = format!(
         "ORBITAL {}{}  (m={})\n\
-         \u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\n\
-         Energia: {:.4} eV\n\
-         Nos radiais: {}\n\
-         Nos angulares: {}\n\
-         \u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\n\
-         CONTROLES:\n\
-         [Setas Cima/Baixo] n = {} (1-4)\n\
-         [Setas Esq/Dir] l = {} (0 a n-1)\n\
-         [M] m = {} (-l a +l)\n\
-         [Clique] Medir posicao (colapso)\n\
-         Medicoes: {}\n\
-         \u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\n\
-         NUMEROS QUANTICOS\n\
-         (emergem das condicoes de contorno)\n\
-         n = 1,2,3,...    (principal)\n\
-         l = 0,...,n-1    (azimutal)\n\
-         m = -l,...,+l    (magnetico)\n\n\
-         INTERPRETACAO DE BORN (1926):\n\
-         |psi|^2 d^3r = probabilidade\n\
-         de encontrar o eletron em d^3r\n\n\
-         PRINCIPIO DE INCERTEZA:\n\
-         Dx * Dp >= hbar/2\n\
-         O eletron NAO esta em lugar\n\
-         nenhum ate ser medido.",
+         \u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\n\
+         E = {:.4} eV  Nos: {}r {}a\n\
+         \u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\n\
+         [Cima/Baixo] n={} [Esq/Dir] l={}\n\
+         [M] m={}  [Clique] Medir ({})\n\
+         \u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\n\
+         n=1..4 (principal)\n\
+         l=0..n-1 (azimutal)\n\
+         m=-l..+l (magnetico)\n\n\
+         |psi|^2 = prob. (Born 1926)\n\
+         Dx*Dp >= hbar/2 (Heisenberg)",
         state.n, sublabel, state.m,
-        energy,
-        radial_nodes,
-        angular_nodes,
-        state.n, state.l, state.m,
-        state.measurements,
+        energy, radial_nodes, angular_nodes,
+        state.n, state.l,
+        state.m, state.measurements,
     );
 
     for mut text in info_query.iter_mut() {
