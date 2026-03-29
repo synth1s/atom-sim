@@ -1,5 +1,6 @@
 use bevy::prelude::*;
 use super::ActiveEra;
+use super::transition::{TransitionState, TransitionPhase};
 
 pub struct TimelinePlugin;
 
@@ -151,21 +152,26 @@ fn update_timeline(
 fn timeline_nav(
     keyboard: Res<ButtonInput<KeyCode>>,
     era: Res<State<ActiveEra>>,
-    mut next_era: ResMut<NextState<ActiveEra>>,
+    mut transition: ResMut<TransitionState>,
 ) {
+    if transition.active {
+        return;
+    }
+
     let current = era_to_index(era.get());
 
-    if keyboard.just_pressed(KeyCode::BracketLeft) {
-        if current > 0 {
-            if let Some(new_era) = index_to_era(current - 1) {
-                next_era.set(new_era);
-            }
-        }
+    let target = if keyboard.just_pressed(KeyCode::BracketLeft) {
+        if current > 0 { index_to_era(current - 1) } else { None }
     } else if keyboard.just_pressed(KeyCode::BracketRight) {
-        if current < 8 {
-            if let Some(new_era) = index_to_era(current + 1) {
-                next_era.set(new_era);
-            }
-        }
+        if current < 8 { index_to_era(current + 1) } else { None }
+    } else {
+        None
+    };
+
+    if let Some(era) = target {
+        transition.active = true;
+        transition.timer = 0.0;
+        transition.phase = TransitionPhase::FadeOut;
+        transition.target_era = era;
     }
 }

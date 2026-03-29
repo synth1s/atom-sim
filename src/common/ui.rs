@@ -1,5 +1,6 @@
 use bevy::prelude::*;
 use super::{ActiveEra, SimulationState};
+use super::transition::{TransitionState, TransitionPhase};
 
 pub struct HudPlugin;
 
@@ -147,26 +148,39 @@ fn toggle_pause(
 
 fn switch_era(
     keyboard: Res<ButtonInput<KeyCode>>,
-    mut next_era: ResMut<NextState<ActiveEra>>,
+    mut transition: ResMut<TransitionState>,
 ) {
-    if keyboard.just_pressed(KeyCode::Digit1) {
-        next_era.set(ActiveEra::Democritus);
+    if transition.active {
+        return;
+    }
+
+    let target = if keyboard.just_pressed(KeyCode::Digit1) {
+        Some(ActiveEra::Democritus)
     } else if keyboard.just_pressed(KeyCode::Digit2) {
-        next_era.set(ActiveEra::Dalton);
+        Some(ActiveEra::Dalton)
     } else if keyboard.just_pressed(KeyCode::Digit3) {
-        next_era.set(ActiveEra::Thomson);
+        Some(ActiveEra::Thomson)
     } else if keyboard.just_pressed(KeyCode::Digit4) {
-        next_era.set(ActiveEra::Rutherford);
+        Some(ActiveEra::Rutherford)
     } else if keyboard.just_pressed(KeyCode::Digit5) {
-        next_era.set(ActiveEra::Bohr);
+        Some(ActiveEra::Bohr)
     } else if keyboard.just_pressed(KeyCode::Digit6) {
-        next_era.set(ActiveEra::Sommerfeld);
+        Some(ActiveEra::Sommerfeld)
     } else if keyboard.just_pressed(KeyCode::Digit7) {
-        next_era.set(ActiveEra::DeBroglie);
+        Some(ActiveEra::DeBroglie)
     } else if keyboard.just_pressed(KeyCode::Digit8) {
-        next_era.set(ActiveEra::Schrodinger);
+        Some(ActiveEra::Schrodinger)
     } else if keyboard.just_pressed(KeyCode::Digit9) {
-        next_era.set(ActiveEra::Dirac);
+        Some(ActiveEra::Dirac)
+    } else {
+        None
+    };
+
+    if let Some(era) = target {
+        transition.active = true;
+        transition.timer = 0.0;
+        transition.phase = TransitionPhase::FadeOut;
+        transition.target_era = era;
     }
 }
 

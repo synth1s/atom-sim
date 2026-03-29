@@ -9,6 +9,9 @@ license = "MIT"
 bevy = "0.18"
 rand = "0.9"
 
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+getrandom = { version = "0.3", features = ["wasm_js"] }
+
 # Fast compilation in dev
 [profile.dev]
 opt-level = 1
