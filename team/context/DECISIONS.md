@@ -112,3 +112,4 @@ Toda funcao publica em `physics/` deve ter pelo menos 1 teste unitario validando
 | 2026-03-29 | D-005 Sincronizacao | Dois silos de memoria isolados precisam de ponte manual |
 | 2026-03-29 | D-006 Ponto de encontro | Briefing no inicio de cada sessao antes de executar |
 | 2026-03-29 | D-007 Cadencia de ideacao | CP-001 propoe ideias a cada sprint se fila < 5 issues |
+| 2026-03-29 | D-008 Autonomia temporaria | Coordenador decide por proprietario ate retorno (sessao noturna) |

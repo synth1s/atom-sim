@@ -1,7 +1,42 @@
 # Changelog — atom-sim
 
-> Atualizado: 2026-03-29
+> Atualizado: 2026-03-29 (sessao noturna, D-008 autonomia temporaria)
 > Registro do que mudou e por que. Agentes devem consultar para evitar retrabalho.
+
+## 2026-03-29 (sessao noturna — D-008 autonomia)
+
+### Sprint 7 — Modo Guiado (commit 197c686)
+- Narrative mode (tecla G): 27 passos narrativos (3 por era)
+- Padrao: Observar → Interagir → Limitacao
+
+### Sprint 6 — Auto-Tour (commit 2b2b18b)
+- Auto-Tour (F5): percorre 9 eras automaticamente, 12s cada
+- Indicador "TOUR" + ESC para interromper
+- Bloqueia input manual durante tour
+
+### Sprint 5 — Sandbox + Snapshot (commit d8e6f9b)
+- Sandbox (tecla P): painel lateral com parametros ajustaveis por era
+- Snapshot (tecla S): salva estado em JSON local
+
+### Sprint 4 — Equacoes + Quiz + Timeline Exp (commit anterior)
+- Equacoes (tecla E): overlay com formulas por era
+- Quiz (tecla Q): 27 perguntas multipla escolha
+- Timeline hover: descricao do experimento chave
+
+### Sprint 3 — Transicao + WASM (commit anterior)
+- Transicao animada: fade 0.3s entre eras
+- WASM: trunk build funcional, index.html, CI atualizado
+
+### Sprint 2 — Timeline + README (commit anterior)
+- Timeline navegavel no rodape (teclas [ ])
+- README.md profissional em ingles
+
+### D-007 Ciclo 2 — 5 novas ideias propostas
+- #20 Mapa de Evidencias Historicas
+- #21 Replay de Experimento Interativo
+- #22 Grafo de Numeros Quanticos
+- #23 Modo Desafio com Predicao (POE)
+- #24 Derivacao Passo-a-Passo Animada
 
 ## 2026-03-29
 

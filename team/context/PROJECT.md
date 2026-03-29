@@ -17,8 +17,8 @@ Simulacao atomica 2D interativa em Rust/Bevy que percorre a historia do modelo a
 
 ## Metricas do Codigo
 
-- **LOC total:** ~5600 (apos sprint de melhorias)
-- **Arquivos fonte:** 21 (19 originais + tooltip.rs + export.rs)
+- **LOC total:** ~7200 (apos 7 sprints)
+- **Arquivos fonte:** 28 (originais + tooltip, export, equations, quiz, sandbox, snapshot, transition, timeline, auto_tour, narrative)
 - **Testes unitarios:** 13 (6 spectral + 7 quantum, todos passando)
 - **Warnings:** 0 (cargo check limpo)
 - **Eras implementadas:** 9
@@ -64,14 +64,24 @@ Cada era segue este padrao:
 6. Systems condicionais: `.run_if(in_state(ActiveEra::Xxx)).run_if(in_state(SimulationState::Running))`
 7. HudText atualizado no setup com contexto historico
 
-## Features Implementadas (Sprint)
+## Features Implementadas (7 Sprints)
 
 - Glow nos fotons/particulas (Bohr, Dirac)
 - Tooltips interativos (Bohr, Rutherford, Schrodinger)
 - Exportar CSV (tecla X, 4 eras)
 - Painel de limitacoes (tecla L, 9 eras)
-- CI/CD GitHub Actions (fmt + clippy + test + build)
+- CI/CD GitHub Actions (fmt + clippy + test + build + WASM)
 - Controles dinamicos por era (EraControls resource)
+- Timeline navegavel no rodape (teclas [ ])
+- Transicao animada entre eras (fade 0.3s)
+- Build WASM (trunk)
+- Painel de equacoes (tecla E, 9 eras)
+- Quiz inline (tecla Q, 27 perguntas)
+- Timeline de experimentos (hover)
+- Sandbox com parametros (tecla P, 9 eras)
+- Snapshot de estado (tecla S, JSON local)
+- Auto-Tour (F5, 12s por era, ~108s total)
+- Modo guiado narrativo (tecla G, 27 passos)
 
 ## Problemas Conhecidos
 
