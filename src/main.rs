@@ -10,6 +10,7 @@ use eras::thomson::ThomsonPlugin;
 use eras::rutherford::RutherfordPlugin;
 use eras::bohr::BohrPlugin;
 use eras::sommerfeld::SommerfeldPlugin;
+use eras::de_broglie::DeBrogliePlugin;
 
 fn main() {
     App::new()
@@ -30,5 +31,6 @@ fn main() {
         .add_plugins(RutherfordPlugin)
         .add_plugins(BohrPlugin)
         .add_plugins(SommerfeldPlugin)
+        .add_plugins(DeBrogliePlugin)
         .run();
 }
