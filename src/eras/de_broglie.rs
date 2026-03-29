@@ -2,7 +2,7 @@ use bevy::prelude::*;
 use std::f32::consts::TAU;
 
 use crate::common::{ActiveEra, SimulationState};
-use crate::common::ui::{HudText, EraControls};
+use crate::common::ui::{HudText, EraControls, LimitationText, LimitationVisible};
 
 pub struct DeBrogliePlugin;
 
@@ -141,6 +141,13 @@ fn setup_de_broglie(
         "[Setas] n (0.5 em 0.5)\n[Q,W,R] n=1,2,4  [F] n=2.5\n[D] Fenda dupla".to_string()
     ));
 
+    // Limitation text
+    commands.insert_resource(LimitationText(
+        "ONDA SEM EQUACAO".to_string(),
+        "De Broglie: lambda = h/p = h/(m*v).\nPara H (n=1): lambda = 0.332 nm,\ncircunferencia da orbita = 0.332 nm.\nOnda estacionaria explica quantizacao!\nMas COMO a onda evolui no tempo?\nFalta equacao de movimento. -> Schrodinger.".to_string(),
+    ));
+    commands.insert_resource(LimitationVisible(false));
+
     // Pré-alocar handles para partículas da fenda dupla
     commands.insert_resource(DeBroglieParticleAssets {
         slit_particle_mesh: meshes.add(Circle::new(2.0)),
@@ -273,6 +280,7 @@ fn cleanup_de_broglie(
     }
     commands.remove_resource::<DeBroglieState>();
     commands.remove_resource::<DeBroglieParticleAssets>();
+    commands.remove_resource::<LimitationText>();
 }
 
 // ---------------------------------------------------------------------------

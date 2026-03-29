@@ -3,7 +3,7 @@ mod eras;
 mod physics;
 
 use bevy::prelude::*;
-use common::{ActiveEra, CameraPlugin, SimulationState};
+use common::{ActiveEra, CameraPlugin, SimulationState, TooltipPlugin, ExportPlugin};
 use eras::democritus::DemocritusPlugin;
 use eras::dalton::DaltonPlugin;
 use eras::thomson::ThomsonPlugin;
@@ -27,6 +27,8 @@ fn main() {
         .init_state::<SimulationState>()
         .init_state::<ActiveEra>()
         .add_plugins(CameraPlugin)
+        .add_plugins(TooltipPlugin)
+        .add_plugins(ExportPlugin)
         .add_plugins(DemocritusPlugin)
         .add_plugins(DaltonPlugin)
         .add_plugins(ThomsonPlugin)

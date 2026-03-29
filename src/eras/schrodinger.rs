@@ -1,7 +1,9 @@
 use bevy::prelude::*;
 
 use crate::common::{ActiveEra, SimulationState};
-use crate::common::ui::{HudText, EraControls};
+use crate::common::ui::{HudText, EraControls, LimitationText, LimitationVisible};
+use crate::common::tooltip::Tooltip;
+use crate::common::export::ExportableData;
 use crate::physics::{quantum, spectral};
 
 pub struct SchrodingerPlugin;
@@ -107,9 +109,17 @@ fn setup_schrodinger(
         "[Setas] n/l  [M] m\n[Clique] Medir (colapso)".to_string()
     ));
 
+    // Limitation text
+    commands.insert_resource(LimitationText(
+        "NAO-RELATIVISTICO".to_string(),
+        "Schrodinger usa E = p^2/(2m) + V,\nvalida so para v << c. Para H(1s),\nv/c ~ alfa ~ 1/137: erro pequeno.\nMas para ouro (Z=79): v/c ~ 0.58!\nErro de ~20% na energia. Tambem\nnao preve spin. -> Dirac (1928).".to_string(),
+    ));
+    commands.insert_resource(LimitationVisible(false));
+
     // Núcleo
     commands.spawn((
         SchrodingerEntity,
+        Tooltip("H: orbital nao-relativistico".to_string()),
         Mesh2d(meshes.add(Circle::new(3.0))),
         MeshMaterial2d(materials.add(ColorMaterial::from_color(
             Color::srgba(1.0, 0.3, 0.2, 0.8),
@@ -149,6 +159,7 @@ fn cleanup_schrodinger(
         commands.entity(entity).despawn();
     }
     commands.remove_resource::<SchrodingerState>();
+    commands.remove_resource::<LimitationText>();
 }
 
 // ---------------------------------------------------------------------------
@@ -292,6 +303,7 @@ fn update_schrodinger_hud(
     state: Option<Res<SchrodingerState>>,
     mut info_query: Query<&mut Text2d, (With<SchrodingerInfoText>, Without<OrbitalLabel>)>,
     mut label_query: Query<&mut Text2d, (With<OrbitalLabel>, Without<SchrodingerInfoText>)>,
+    mut export_data: ResMut<ExportableData>,
 ) {
     let Some(state) = state else { return };
 
@@ -335,4 +347,26 @@ fn update_schrodinger_hud(
     for mut text in label_query.iter_mut() {
         *text = Text2d::new(label.clone());
     }
+
+    // Populate export data with all allowed quantum numbers for current n
+    export_data.era_name = "schrodinger".to_string();
+    export_data.headers = vec![
+        "n".to_string(),
+        "l".to_string(),
+        "m".to_string(),
+        "energy_eV".to_string(),
+    ];
+    let mut rows = Vec::new();
+    for l in 0..state.n {
+        for m in -(l as i32)..=(l as i32) {
+            let e = spectral::bohr_energy(state.n);
+            rows.push(vec![
+                state.n.to_string(),
+                l.to_string(),
+                m.to_string(),
+                format!("{:.6}", e),
+            ]);
+        }
+    }
+    export_data.rows = rows;
 }

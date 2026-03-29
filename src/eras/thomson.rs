@@ -3,7 +3,7 @@ use rand::Rng;
 use std::f32::consts::TAU;
 
 use crate::common::{ActiveEra, SimulationState};
-use crate::common::ui::{HudText, EraControls};
+use crate::common::ui::{HudText, EraControls, LimitationText, LimitationVisible};
 use crate::physics::coulomb;
 
 pub struct ThomsonPlugin;
@@ -168,6 +168,13 @@ fn setup_thomson(
         "[Setas] Campos E/B\n[F] Toggle feixe\n[A] Teste alfa".to_string()
     ));
 
+    // Limitation text
+    commands.insert_resource(LimitationText(
+        "PUDIM SEM NUCLEO".to_string(),
+        "Thomson distribui carga + uniforme\ncom eletrons imersos (plum pudding).\nRutherford (1911): alfas a 5.5 MeV\nricocheteiam a >90 graus. Probabili-\ndade no modelo de Thomson: ~1e-3500.\nMassa esta concentrada. -> Rutherford.".to_string(),
+    ));
+    commands.insert_resource(LimitationVisible(false));
+
     // Pré-alocar handles para partículas emitidas
     commands.insert_resource(ThomsonParticleAssets {
         cathode_mesh: meshes.add(Circle::new(3.0)),
@@ -326,6 +333,7 @@ fn cleanup_thomson(
     commands.remove_resource::<CathodeRayConfig>();
     commands.remove_resource::<AlphaTestState>();
     commands.remove_resource::<ThomsonParticleAssets>();
+    commands.remove_resource::<LimitationText>();
 }
 
 // ---------------------------------------------------------------------------

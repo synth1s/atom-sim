@@ -1,8 +1,12 @@
 mod camera;
 pub mod ui;
+pub mod tooltip;
+pub mod export;
 
 pub use camera::CameraPlugin;
 pub use ui::HudPlugin;
+pub use tooltip::TooltipPlugin;
+pub use export::ExportPlugin;
 
 use bevy::prelude::*;
 

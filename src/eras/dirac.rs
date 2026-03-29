@@ -2,7 +2,8 @@ use bevy::prelude::*;
 use rand::Rng;
 
 use crate::common::{ActiveEra, SimulationState};
-use crate::common::ui::{HudText, EraControls};
+use crate::common::ui::{HudText, EraControls, LimitationText, LimitationVisible};
+use crate::common::export::ExportableData;
 use crate::physics::spectral;
 
 pub struct DiracPlugin;
@@ -83,6 +84,15 @@ struct DiracParticleAssets {
     gamma_mat: Handle<ColorMaterial>,
     gamma_high_mesh: Handle<Mesh>,
     gamma_high_mat: Handle<ColorMaterial>,
+    // Glow (halo) assets
+    electron_glow_mesh: Handle<Mesh>,
+    electron_glow_mat: Handle<ColorMaterial>,
+    positron_glow_mesh: Handle<Mesh>,
+    positron_glow_mat: Handle<ColorMaterial>,
+    gamma_glow_mesh: Handle<Mesh>,
+    gamma_glow_mat: Handle<ColorMaterial>,
+    gamma_high_glow_mesh: Handle<Mesh>,
+    gamma_high_glow_mat: Handle<ColorMaterial>,
 }
 
 // ---------------------------------------------------------------------------
@@ -166,6 +176,13 @@ fn setup_dirac(
         "[P] Foton gamma\n[Setas] n/j (estrutura fina)".to_string()
     ));
 
+    // Limitation text
+    commands.insert_resource(LimitationText(
+        "ALEM DE DIRAC: QED".to_string(),
+        "Dirac preve spin, antimateria e\nestrutura fina EXATA. Mas em 1947,\nLamb mede desvio de +1057 MHz entre\n2S(1/2) e 2P(1/2) do H: Lamb shift.\nDirac preve zero. A causa: flutuacoes\ndo vacuo quantico. -> QED (Feynman).".to_string(),
+    ));
+    commands.insert_resource(LimitationVisible(false));
+
     // Pré-alocar handles para partículas emitidas
     commands.insert_resource(DiracParticleAssets {
         electron_mesh: meshes.add(Circle::new(6.0)),
@@ -183,6 +200,23 @@ fn setup_dirac(
         gamma_high_mesh: meshes.add(Circle::new(5.0)),
         gamma_high_mat: materials.add(ColorMaterial::from_color(
             Color::srgba(1.0, 1.0, 0.0, 0.9),
+        )),
+        // Glow (halo) assets
+        electron_glow_mesh: meshes.add(Circle::new(16.0)),
+        electron_glow_mat: materials.add(ColorMaterial::from_color(
+            Color::srgba(0.2, 0.5, 1.0, 0.15),
+        )),
+        positron_glow_mesh: meshes.add(Circle::new(16.0)),
+        positron_glow_mat: materials.add(ColorMaterial::from_color(
+            Color::srgba(1.0, 0.3, 0.2, 0.15),
+        )),
+        gamma_glow_mesh: meshes.add(Circle::new(12.0)),
+        gamma_glow_mat: materials.add(ColorMaterial::from_color(
+            Color::srgba(1.0, 1.0, 0.3, 0.18),
+        )),
+        gamma_high_glow_mesh: meshes.add(Circle::new(15.0)),
+        gamma_high_glow_mat: materials.add(ColorMaterial::from_color(
+            Color::srgba(1.0, 1.0, 0.0, 0.18),
         )),
     });
 
@@ -319,6 +353,7 @@ fn cleanup_dirac(
     }
     commands.remove_resource::<DiracState>();
     commands.remove_resource::<DiracParticleAssets>();
+    commands.remove_resource::<LimitationText>();
 }
 
 // ---------------------------------------------------------------------------
@@ -341,26 +376,52 @@ fn pair_creation_system(
             let mut rng = rand::rng();
             let spread = rng.random_range(30.0_f32..80.0);
 
+            let e_vel = Vec2::new(80.0, spread);
+            let e_spin = rng.random_bool(0.5);
             commands.spawn((
                 DiracEntity,
                 Electron {
-                    vel: Vec2::new(80.0, spread),
-                    spin_up: rng.random_bool(0.5),
+                    vel: e_vel,
+                    spin_up: e_spin,
                 },
                 Mesh2d(assets.electron_mesh.clone()),
                 MeshMaterial2d(assets.electron_mat.clone()),
                 Transform::from_xyz(pos.x, pos.y, 3.0),
             ));
+            // Electron glow
+            commands.spawn((
+                DiracEntity,
+                Electron {
+                    vel: e_vel,
+                    spin_up: e_spin,
+                },
+                Mesh2d(assets.electron_glow_mesh.clone()),
+                MeshMaterial2d(assets.electron_glow_mat.clone()),
+                Transform::from_xyz(pos.x, pos.y, 2.5),
+            ));
 
+            let p_vel = Vec2::new(80.0, -spread);
+            let p_spin = !rng.random_bool(0.5);
             commands.spawn((
                 DiracEntity,
                 Positron {
-                    vel: Vec2::new(80.0, -spread),
-                    spin_up: !rng.random_bool(0.5),
+                    vel: p_vel,
+                    spin_up: p_spin,
                 },
                 Mesh2d(assets.positron_mesh.clone()),
                 MeshMaterial2d(assets.positron_mat.clone()),
                 Transform::from_xyz(pos.x, pos.y, 3.0),
+            ));
+            // Positron glow
+            commands.spawn((
+                DiracEntity,
+                Positron {
+                    vel: p_vel,
+                    spin_up: p_spin,
+                },
+                Mesh2d(assets.positron_glow_mesh.clone()),
+                MeshMaterial2d(assets.positron_glow_mat.clone()),
+                Transform::from_xyz(pos.x, pos.y, 2.5),
             ));
 
             commands.entity(entity).despawn();
@@ -404,6 +465,18 @@ fn annihilation_system(
                         Mesh2d(assets.gamma_mesh.clone()),
                         MeshMaterial2d(assets.gamma_mat.clone()),
                         Transform::from_xyz(mid.x, mid.y, 4.0),
+                    ));
+                    // Gamma glow
+                    commands.spawn((
+                        DiracEntity,
+                        GammaPhoton {
+                            vel: dir,
+                            energy_mev: ELECTRON_MASS_MEV,
+                            lifetime: 3.0,
+                        },
+                        Mesh2d(assets.gamma_glow_mesh.clone()),
+                        MeshMaterial2d(assets.gamma_glow_mat.clone()),
+                        Transform::from_xyz(mid.x, mid.y, 3.5),
                     ));
                 }
 
@@ -481,6 +554,18 @@ fn dirac_controls(
                 MeshMaterial2d(assets.gamma_high_mat.clone()),
                 Transform::from_xyz(-400.0, CENTER.y, 4.0),
             ));
+            // Gamma high-energy glow
+            commands.spawn((
+                DiracEntity,
+                GammaPhoton {
+                    vel: Vec2::new(120.0, 0.0),
+                    energy_mev: 2.0,
+                    lifetime: 3.0,
+                },
+                Mesh2d(assets.gamma_high_glow_mesh.clone()),
+                MeshMaterial2d(assets.gamma_high_glow_mat.clone()),
+                Transform::from_xyz(-400.0, CENTER.y, 3.5),
+            ));
         }
     }
 
@@ -512,6 +597,7 @@ fn update_dirac_hud(
     state: Option<Res<DiracState>>,
     mut info_query: Query<&mut Text2d, (With<DiracInfoText>, Without<EnergySpectrumText>)>,
     mut spectrum_query: Query<&mut Text2d, (With<EnergySpectrumText>, Without<DiracInfoText>)>,
+    mut export_data: ResMut<ExportableData>,
 ) {
     let Some(state) = state else { return };
 
@@ -575,4 +661,26 @@ fn update_dirac_hud(
     for mut text in spectrum_query.iter_mut() {
         *text = Text2d::new(spectrum.clone());
     }
+
+    // Populate export data with fine structure for all sub-levels up to n=4
+    export_data.era_name = "dirac".to_string();
+    export_data.headers = vec![
+        "n".to_string(),
+        "j".to_string(),
+        "energy_eV".to_string(),
+    ];
+    let mut rows = Vec::new();
+    for n_val in 1..=4u32 {
+        let mut j_h = 1u32;
+        while j_h <= 2 * n_val - 1 {
+            let e = dirac_energy(n_val, j_h, 1);
+            rows.push(vec![
+                n_val.to_string(),
+                format!("{}/2", j_h),
+                format!("{:.6}", e),
+            ]);
+            j_h += 2;
+        }
+    }
+    export_data.rows = rows;
 }

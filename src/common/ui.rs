@@ -6,10 +6,24 @@ pub struct HudPlugin;
 impl Plugin for HudPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<EraControls>()
+            .init_resource::<LimitationText>()
+            .init_resource::<LimitationVisible>()
             .add_systems(Startup, spawn_hud)
-            .add_systems(Update, (update_status_hud, update_controls_hud, toggle_pause, switch_era));
+            .add_systems(Update, (update_status_hud, update_controls_hud, toggle_pause, switch_era, toggle_limitation));
     }
 }
+
+/// Resource holding the limitation text for the current era.
+#[derive(Resource, Default)]
+pub struct LimitationText(pub String, pub String);
+
+/// Resource controlling visibility of the limitation overlay.
+#[derive(Resource, Default)]
+pub struct LimitationVisible(pub bool);
+
+/// Marker for the limitation overlay entities.
+#[derive(Component)]
+struct LimitationOverlay;
 
 /// Marcador para o texto principal do HUD (contexto histórico).
 #[derive(Component)]
@@ -61,7 +75,9 @@ fn spawn_hud(mut commands: Commands) {
              [Espaco] Pausar/Retomar\n\
              [Clique] Adicionar atomo\n\
              [Scroll] Zoom\n\
-             [1-9] Trocar era"
+             [1-9] Trocar era\n\
+             [X] Exportar CSV\n\
+             [L] Limitacoes"
         ),
         TextFont {
             font_size: 14.0,
@@ -100,7 +116,9 @@ fn update_controls_hud(
     let base = "CONTROLES:\n\
                 [Espaco] Pausar/Retomar\n\
                 [Scroll] Zoom\n\
-                [1-9] Trocar era";
+                [1-9] Trocar era\n\
+                [X] Exportar CSV\n\
+                [L] Limitacoes";
 
     let full = if era_controls.0.is_empty() {
         base.to_string()
@@ -148,5 +166,60 @@ fn switch_era(
         next_era.set(ActiveEra::Schrodinger);
     } else if keyboard.just_pressed(KeyCode::Digit9) {
         next_era.set(ActiveEra::Dirac);
+    }
+}
+
+fn toggle_limitation(
+    mut commands: Commands,
+    keyboard: Res<ButtonInput<KeyCode>>,
+    mut visible: ResMut<LimitationVisible>,
+    limitation_text: Res<LimitationText>,
+    existing: Query<Entity, With<LimitationOverlay>>,
+) {
+    if keyboard.just_pressed(KeyCode::KeyL) {
+        visible.0 = !visible.0;
+    }
+
+    if visible.0 {
+        // Only spawn if not already present
+        if existing.iter().count() == 0 && !limitation_text.0.is_empty() {
+            // Dark background overlay
+            commands.spawn((
+                LimitationOverlay,
+                Mesh2d(bevy::prelude::Handle::default()),
+                Transform::from_xyz(0.0, 0.0, 90.0),
+            ));
+
+            // Title
+            commands.spawn((
+                LimitationOverlay,
+                Text2d::new(limitation_text.0.clone()),
+                TextFont {
+                    font_size: 20.0,
+                    ..default()
+                },
+                TextColor(Color::srgba(1.0, 0.8, 0.3, 1.0)),
+                Transform::from_xyz(0.0, 120.0, 91.0),
+                bevy::text::TextLayout::new_with_justify(bevy::text::Justify::Center),
+            ));
+
+            // Body text
+            commands.spawn((
+                LimitationOverlay,
+                Text2d::new(limitation_text.1.clone()),
+                TextFont {
+                    font_size: 15.0,
+                    ..default()
+                },
+                TextColor(Color::srgba(0.9, 0.9, 0.8, 0.95)),
+                Transform::from_xyz(0.0, 0.0, 91.0),
+                bevy::text::TextLayout::new_with_justify(bevy::text::Justify::Center),
+            ));
+        }
+    } else {
+        // Despawn all overlay entities
+        for entity in existing.iter() {
+            commands.entity(entity).despawn();
+        }
     }
 }

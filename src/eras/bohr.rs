@@ -1,6 +1,8 @@
 use bevy::prelude::*;
 use crate::common::{ActiveEra, SimulationState};
-use crate::common::ui::{HudText, EraControls};
+use crate::common::ui::{HudText, EraControls, LimitationText, LimitationVisible};
+use crate::common::tooltip::Tooltip;
+use crate::common::export::ExportableData;
 use crate::physics::spectral;
 
 pub struct BohrPlugin;
@@ -74,6 +76,7 @@ struct SpectrumLabel;
 #[derive(Resource)]
 struct BohrParticleAssets {
     photon_mesh: Handle<Mesh>,
+    photon_glow_mesh: Handle<Mesh>,
     spectral_line_mesh: Handle<Mesh>,
 }
 
@@ -145,13 +148,22 @@ fn setup_bohr(
     // Pré-alocar handles para partículas emitidas
     commands.insert_resource(BohrParticleAssets {
         photon_mesh: meshes.add(Circle::new(4.0)),
+        photon_glow_mesh: meshes.add(Circle::new(12.0)),
         spectral_line_mesh: meshes.add(Rectangle::new(2.0, 30.0)),
     });
+
+    // Limitation text
+    commands.insert_resource(LimitationText(
+        "ORBITAS SEM ESTRUTURA FINA".to_string(),
+        "Bohr preve niveis E_n = -13.6/n^2 eV\nmas cada nivel e um unico valor.\nEspectros de alta resolucao mostram\nlinhas DUPLAS (ex: H-alfa se divide).\nDiferenca de ~0.000045 eV em n=2.\nFalta um grau de liberdade. -> Sommerfeld.".to_string(),
+    ));
+    commands.insert_resource(LimitationVisible(false));
 
     // Núcleo
     commands.spawn((
         BohrEntity,
         BohrNucleus,
+        Tooltip("Nucleo H (Z=1)".to_string()),
         Mesh2d(meshes.add(Circle::new(6.0))),
         MeshMaterial2d(materials.add(ColorMaterial::from_color(
             Color::srgba(1.0, 0.3, 0.2, 1.0),
@@ -190,12 +202,14 @@ fn setup_bohr(
     // Elétron (inicia em n=3)
     let initial_n = 3u32;
     let r = orbit_radius(initial_n);
+    let e_energy = spectral::bohr_energy(initial_n);
     commands.spawn((
         BohrEntity,
         BohrElectron {
             n: initial_n,
             angle: 0.0,
         },
+        Tooltip(format!("Eletron n={}, E={:.2} eV", initial_n, e_energy)),
         Mesh2d(meshes.add(Circle::new(7.0))),
         MeshMaterial2d(materials.add(ColorMaterial::from_color(
             Color::srgba(0.2, 0.6, 1.0, 1.0),
@@ -255,6 +269,7 @@ fn cleanup_bohr(
     }
     commands.remove_resource::<BohrState>();
     commands.remove_resource::<BohrParticleAssets>();
+    commands.remove_resource::<LimitationText>();
 }
 
 // ---------------------------------------------------------------------------
@@ -370,6 +385,20 @@ fn bohr_controls(
                     Transform::from_xyz(electron_pos.x, electron_pos.y, 4.0),
                 ));
 
+                // Glow (halo) do fóton — mesma cor com alpha baixo
+                let glow_color = color.with_alpha(0.18);
+                let glow_mat = materials.add(ColorMaterial::from_color(glow_color));
+                commands.spawn((
+                    BohrEntity,
+                    Photon {
+                        vel: dir * photon_speed,
+                        lifetime: 3.0,
+                    },
+                    Mesh2d(assets.photon_glow_mesh.clone()),
+                    MeshMaterial2d(glow_mat),
+                    Transform::from_xyz(electron_pos.x, electron_pos.y, 3.5),
+                ));
+
                 // Adicionar linha espectral ao espectrógrafo
                 let x_pos = wavelength_to_spectrum_x(wavelength_nm);
                 commands.spawn((
@@ -404,6 +433,8 @@ fn update_bohr_hud(
     bohr_state: Option<Res<BohrState>>,
     mut energy_query: Query<&mut Text2d, (With<EnergyDiagramText>, Without<BohrInfoText>)>,
     mut info_query: Query<&mut Text2d, (With<BohrInfoText>, Without<EnergyDiagramText>)>,
+    mut electron_tooltip: Query<&mut Tooltip, With<BohrElectron>>,
+    mut export_data: ResMut<ExportableData>,
 ) {
     let Some(state) = bohr_state else { return };
 
@@ -456,4 +487,29 @@ fn update_bohr_hud(
     for mut text in info_query.iter_mut() {
         *text = Text2d::new(info.clone());
     }
+
+    // Update electron tooltip
+    let e = spectral::bohr_energy(state.current_n);
+    for mut tooltip in electron_tooltip.iter_mut() {
+        tooltip.0 = format!("Eletron n={}, E={:.2} eV", state.current_n, e);
+    }
+
+    // Populate export data
+    export_data.era_name = "bohr".to_string();
+    export_data.headers = vec![
+        "n_upper".to_string(),
+        "n_lower".to_string(),
+        "wavelength_nm".to_string(),
+    ];
+    export_data.rows = state
+        .transitions_recorded
+        .iter()
+        .map(|(n_up, n_low, wl)| {
+            vec![
+                n_up.to_string(),
+                n_low.to_string(),
+                format!("{:.2}", wl),
+            ]
+        })
+        .collect();
 }

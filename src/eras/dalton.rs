@@ -2,7 +2,7 @@ use bevy::prelude::*;
 use rand::Rng;
 
 use crate::common::{ActiveEra, Arena, SimulationState};
-use crate::common::ui::{HudText, EraControls};
+use crate::common::ui::{HudText, EraControls, LimitationText, LimitationVisible};
 use crate::physics::classical::{self, Mass, Radius, Velocity};
 
 pub struct DaltonPlugin;
@@ -182,6 +182,13 @@ fn setup_dalton(
     commands.insert_resource(AtomCounts::default());
     commands.insert_resource(EraControls("[E] Trocar elemento\n[Clique] Adicionar atomo".to_string()));
 
+    // Limitation text
+    commands.insert_resource(LimitationText(
+        "ATOMO INDIVISIVEL".to_string(),
+        "Dalton assume atomos como esferas\nsolidas e indivisiveis. Mas em 1897,\nThomson descobre o eletron (e/m =\n1.76e11 C/kg): particula 1836x mais\nleve que H. O atomo TEM estrutura\ninterna. -> Thomson e o eletron.".to_string(),
+    ));
+    commands.insert_resource(LimitationVisible(false));
+
     // Arena walls
     let wall_color = Color::srgba(0.3, 0.3, 0.35, 0.6);
     let thickness = 2.0;
@@ -298,6 +305,7 @@ fn cleanup_dalton(
     commands.remove_resource::<SelectedElement>();
     commands.remove_resource::<AtomCounts>();
     commands.remove_resource::<DaltonParticleAssets>();
+    commands.remove_resource::<LimitationText>();
 }
 
 // ---------------------------------------------------------------------------

@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 
 use crate::common::{ActiveEra, SimulationState};
-use crate::common::ui::{HudText, EraControls};
+use crate::common::ui::{HudText, EraControls, LimitationText, LimitationVisible};
 use crate::physics::spectral;
 
 pub struct SommerfeldPlugin;
@@ -157,6 +157,13 @@ fn setup_sommerfeld(
         "[Setas] n/k  [M] m\n[B/V] Campo magnetico".to_string()
     ));
 
+    // Limitation text
+    commands.insert_resource(LimitationText(
+        "ORBITAS SEM ONDAS".to_string(),
+        "Sommerfeld adiciona orbitas elipticas\ne correcao relativistica (alfa~1/137).\nMas regras de quantizacao sao ad hoc:\npor que L = n*hbar? Nenhuma razao\nfisica. Em 1924, de Broglie responde:\no eletron e uma ONDA. -> De Broglie.".to_string(),
+    ));
+    commands.insert_resource(LimitationVisible(false));
+
     // Núcleo
     commands.spawn((
         SommerfeldEntity,
@@ -279,6 +286,7 @@ fn cleanup_sommerfeld(
         commands.entity(entity).despawn();
     }
     commands.remove_resource::<SommerfeldState>();
+    commands.remove_resource::<LimitationText>();
 }
 
 // ---------------------------------------------------------------------------

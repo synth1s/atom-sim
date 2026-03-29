@@ -2,7 +2,7 @@ use bevy::prelude::*;
 use rand::Rng;
 
 use crate::common::{ActiveEra, Arena, HudPlugin, SimulationState};
-use crate::common::ui::{HudText, EraControls};
+use crate::common::ui::{HudText, EraControls, LimitationText, LimitationVisible};
 use crate::physics::classical::{self, Mass, Radius, Velocity};
 
 pub struct DemocritusPlugin;
@@ -81,6 +81,13 @@ fn setup_democritus(
 
     commands.insert_resource(EraControls("[Clique] Adicionar atomo".to_string()));
 
+    // Limitation text
+    commands.insert_resource(LimitationText(
+        "ATOMOS SEM DIVERSIDADE".to_string(),
+        "Democrito propoe atomos identicos que\ndiferem apenas em forma e arranjo.\nSem diferencas de massa entre tipos,\nnao ha base para leis quantitativas.\nProporcoes definidas nas reacoes?\nImpossivel prever. -> Dalton (1803).".to_string(),
+    ));
+    commands.insert_resource(LimitationVisible(false));
+
     // Arena walls
     let wall_color = Color::srgba(0.3, 0.3, 0.35, 0.6);
     let thickness = 2.0;
@@ -156,6 +163,7 @@ fn cleanup_democritus(
     }
     commands.remove_resource::<AtomAssets>();
     commands.remove_resource::<AtomCount>();
+    commands.remove_resource::<LimitationText>();
 }
 
 fn spawn_atom_on_click(

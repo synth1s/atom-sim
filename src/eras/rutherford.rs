@@ -1,7 +1,9 @@
 use bevy::prelude::*;
 use rand::Rng;
 use crate::common::{ActiveEra, SimulationState};
-use crate::common::ui::{HudText, EraControls};
+use crate::common::ui::{HudText, EraControls, LimitationText, LimitationVisible};
+use crate::common::tooltip::Tooltip;
+use crate::common::export::ExportableData;
 
 pub struct RutherfordPlugin;
 
@@ -185,10 +187,18 @@ fn setup_rutherford(
         )),
     });
 
+    // Limitation text
+    commands.insert_resource(LimitationText(
+        "PARADOXO DO COLAPSO".to_string(),
+        "Pela eletrodinamica classica (Larmor),\num eletron orbitando irradia energia a\nP = e^2*a^2/(6*pi*eps0*c^3).\nPara o Hidrogenio: colapso em ~16 ps.\nO atomo NAO deveria existir.\n-> Bohr postulou orbitas estaveis (1913).".to_string(),
+    ));
+    commands.insert_resource(LimitationVisible(false));
+
     // Núcleo — ponto vermelho minúsculo
     commands.spawn((
         RutherfordEntity,
         Nucleus { charge_z: 79.0 },
+        Tooltip("Nucleo Au (Z=79), r~7 fm".to_string()),
         Mesh2d(meshes.add(Circle::new(NUCLEUS_VISUAL_RADIUS))),
         MeshMaterial2d(materials.add(ColorMaterial::from_color(
             Color::srgba(1.0, 0.2, 0.15, 1.0),
@@ -252,6 +262,7 @@ fn setup_rutherford(
         commands.spawn((
             RutherfordEntity,
             HistogramBar(i),
+            Tooltip(format!("Bin {}-{}deg", i * 10, (i + 1) * 10)),
             Mesh2d(bar_mesh.clone()),
             MeshMaterial2d(bar_mat.clone()),
             Transform::from_xyz(
@@ -293,6 +304,7 @@ fn cleanup_rutherford(
     commands.remove_resource::<ExperimentConfig>();
     commands.remove_resource::<DeflectionHistogram>();
     commands.remove_resource::<RutherfordParticleAssets>();
+    commands.remove_resource::<LimitationText>();
 }
 
 // ---------------------------------------------------------------------------
@@ -498,6 +510,7 @@ fn update_rutherford_hud(
     config: Option<Res<ExperimentConfig>>,
     mut info_query: Query<&mut Text2d, With<RutherfordInfoText>>,
     mut bar_query: Query<(&HistogramBar, &mut Transform), Without<RutherfordInfoText>>,
+    mut export_data: ResMut<ExportableData>,
 ) {
     let Some(histogram) = histogram else { return };
     let Some(config) = config else { return };
@@ -552,4 +565,21 @@ fn update_rutherford_hud(
     for mut text in info_query.iter_mut() {
         *text = Text2d::new(info.clone());
     }
+
+    // Populate export data
+    export_data.era_name = "rutherford".to_string();
+    export_data.headers = vec![
+        "bin_start_deg".to_string(),
+        "bin_end_deg".to_string(),
+        "count".to_string(),
+    ];
+    export_data.rows = (0..18)
+        .map(|i| {
+            vec![
+                (i * 10).to_string(),
+                ((i + 1) * 10).to_string(),
+                histogram.bins[i].to_string(),
+            ]
+        })
+        .collect();
 }
