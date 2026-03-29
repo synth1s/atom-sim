@@ -17,9 +17,9 @@ Simulacao atomica 2D interativa em Rust/Bevy que percorre a historia do modelo a
 
 ## Metricas do Codigo
 
-- **LOC total:** ~7200 (apos 7 sprints)
-- **Arquivos fonte:** 28 (originais + tooltip, export, equations, quiz, sandbox, snapshot, transition, timeline, auto_tour, narrative)
-- **Testes unitarios:** 13 (6 spectral + 7 quantum, todos passando)
+- **LOC total:** ~9500 (apos 10 sprints)
+- **Arquivos fonte:** 33 (originais + tooltip, export, equations, quiz, sandbox, snapshot, transition, timeline, auto_tour, narrative, evidence, quantum_explorer, predict, experiment, walkthrough)
+- **Testes unitarios:** 16 (6 spectral + 7 quantum + 3 predict, todos passando)
 - **Warnings:** 0 (cargo check limpo)
 - **Eras implementadas:** 9
 
@@ -82,6 +82,11 @@ Cada era segue este padrao:
 - Snapshot de estado (tecla S, JSON local)
 - Auto-Tour (F5, 12s por era, ~108s total)
 - Modo guiado narrativo (tecla G, 27 passos)
+- Mapa de evidencias historicas (tecla H, 9 eras)
+- Grafo de numeros quanticos (tecla N, interativo)
+- Modo predicao POE (tecla F1, 18 predicoes)
+- Replay de experimento (tecla F2, 23 passos)
+- Derivacao passo-a-passo (tecla F3, 9 eras)
 
 ## Problemas Conhecidos
 
