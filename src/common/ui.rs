@@ -117,6 +117,7 @@ fn update_controls_hud(
                 [Espaco] Pausar/Retomar\n\
                 [Scroll] Zoom\n\
                 [1-9] Trocar era\n\
+                [[ ]] Era anterior/proxima\n\
                 [X] Exportar CSV\n\
                 [L] Limitacoes";
 

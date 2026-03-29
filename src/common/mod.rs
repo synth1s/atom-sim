@@ -2,11 +2,13 @@ mod camera;
 pub mod ui;
 pub mod tooltip;
 pub mod export;
+pub mod timeline;
 
 pub use camera::CameraPlugin;
 pub use ui::HudPlugin;
 pub use tooltip::TooltipPlugin;
 pub use export::ExportPlugin;
+pub use timeline::TimelinePlugin;
 
 use bevy::prelude::*;
 
