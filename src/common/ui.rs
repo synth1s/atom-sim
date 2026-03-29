@@ -1,6 +1,7 @@
 use bevy::prelude::*;
 use super::{ActiveEra, SimulationState};
 use super::transition::{TransitionState, TransitionPhase};
+use super::auto_tour::AutoTourState;
 
 pub struct HudPlugin;
 
@@ -124,7 +125,8 @@ fn update_controls_hud(
                 [E] Equacoes\n\
                 [Q] Quiz\n\
                 [P] Parametros\n\
-                [S] Snapshot";
+                [S] Snapshot\n\
+                [F5] Auto-Tour";
 
     let full = if era_controls.0.is_empty() {
         base.to_string()
@@ -153,8 +155,9 @@ fn toggle_pause(
 fn switch_era(
     keyboard: Res<ButtonInput<KeyCode>>,
     mut transition: ResMut<TransitionState>,
+    tour: Res<AutoTourState>,
 ) {
-    if transition.active {
+    if transition.active || tour.active {
         return;
     }
 

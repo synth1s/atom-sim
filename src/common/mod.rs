@@ -8,6 +8,7 @@ pub mod equations;
 pub mod quiz;
 pub mod sandbox;
 pub mod snapshot;
+pub mod auto_tour;
 
 pub use camera::CameraPlugin;
 pub use ui::HudPlugin;
@@ -19,6 +20,7 @@ pub use equations::EquationsPlugin;
 pub use quiz::QuizPlugin;
 pub use sandbox::SandboxPlugin;
 pub use snapshot::SnapshotPlugin;
+pub use auto_tour::AutoTourPlugin;
 
 use bevy::prelude::*;
 

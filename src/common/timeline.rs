@@ -1,6 +1,7 @@
 use bevy::prelude::*;
 use super::ActiveEra;
 use super::transition::{TransitionState, TransitionPhase};
+use super::auto_tour::AutoTourState;
 
 pub struct TimelinePlugin;
 
@@ -172,8 +173,9 @@ fn timeline_nav(
     keyboard: Res<ButtonInput<KeyCode>>,
     era: Res<State<ActiveEra>>,
     mut transition: ResMut<TransitionState>,
+    tour: Res<AutoTourState>,
 ) {
-    if transition.active {
+    if transition.active || tour.active {
         return;
     }
 
