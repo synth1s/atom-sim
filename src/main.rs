@@ -8,6 +8,7 @@ use eras::democritus::DemocritusPlugin;
 use eras::dalton::DaltonPlugin;
 use eras::thomson::ThomsonPlugin;
 use eras::rutherford::RutherfordPlugin;
+use eras::bohr::BohrPlugin;
 
 fn main() {
     App::new()
@@ -26,5 +27,6 @@ fn main() {
         .add_plugins(DaltonPlugin)
         .add_plugins(ThomsonPlugin)
         .add_plugins(RutherfordPlugin)
+        .add_plugins(BohrPlugin)
         .run();
 }

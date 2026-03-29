@@ -56,7 +56,7 @@ fn spawn_hud(mut commands: Commands) {
              [Espaco] Pausar/Retomar\n\
              [Clique] Adicionar atomo\n\
              [Scroll] Zoom\n\
-             [1-4] Trocar era"
+             [1-5] Trocar era"
         ),
         TextFont {
             font_size: 14.0,
@@ -111,5 +111,7 @@ fn switch_era(
         next_era.set(ActiveEra::Thomson);
     } else if keyboard.just_pressed(KeyCode::Digit4) {
         next_era.set(ActiveEra::Rutherford);
+    } else if keyboard.just_pressed(KeyCode::Digit5) {
+        next_era.set(ActiveEra::Bohr);
     }
 }
