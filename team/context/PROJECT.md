@@ -101,6 +101,13 @@ Cada era segue este padrao:
 - Runner: ubuntu-latest com deps Bevy (libasound2-dev, libudev-dev, etc)
 - Cache: Cargo registry + target
 
+## Ferramentas
+
+- **Taiga:** http://localhost:9000 — projeto atom-sim (id=4), backlog + sprints
+- **Wiki.js:** http://localhost:3000 — documentacao
+- **Grafana:** http://localhost:3001 — metricas
+- **Portainer:** https://localhost:9443 — containers
+
 ## Agency
 
 - **Specs dos agentes (canonical):** https://github.com/synth1s/agency/specs/

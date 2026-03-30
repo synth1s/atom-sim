@@ -124,3 +124,4 @@ O criterio #6 de SE-001 e reclassificado de peso 3 para peso 5.
 | 2026-03-29 | D-007 Cadencia de ideacao | CP-001 propoe ideias a cada sprint se fila < 5 issues |
 | 2026-03-29 | D-008 Autonomia temporaria | Coordenador decide por proprietario ate retorno (sessao noturna) |
 | 2026-03-29 | C-008 Testes como gate | Toda entrega DEVE incluir testes. Sem testes = rejeicao automatica |
+| 2026-03-30 | D-009 Integracao Taiga | Projeto atom-sim criado no Taiga (id=4). Backlog e sprints gerenciados la. |
