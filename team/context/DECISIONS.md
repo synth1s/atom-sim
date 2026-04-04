@@ -112,36 +112,11 @@ O criterio #6 de SE-001 e reclassificado de peso 3 para peso 5.
 
 ---
 
-## Convencoes Globais (herdadas de agency/DECISIONS.md)
+## Convencoes Globais
 
-> Definidas no repositorio `agency/` e aplicaveis a todos os projetos.
-> Para detalhes completos, consultar `agency/DECISIONS.md`.
-> Atualizado: 2026-04-03.
-> Nota: D-006 local (Ponto de Encontro) e distinto de D-006 global (Process Freeze).
-
-### D-006 Global: Congelamento de Novos Processos (Process Freeze)
-Nenhum novo PROC ate primeiro cliente pagante. Processos existentes continuam vigentes.
-
-### C-022: Research Gate (PILOTO)
-Tarefas Medium/High uncertainty requerem Research Brief antes de decomposicao.
-
-### C-023: Rastreabilidade (PILOTO)
-Cadeia: Decisao → Story (TG-NNN) → Commit (`[TG-NNN]`) → Teste → Validacao.
-
-### C-024: Security Baseline (PILOTO)
-Checklist OWASP Top 10 para entregas com endpoints ou input de usuario.
-
-### C-025: Workflow Tiers (PILOTO)
-Tier 1 (trivial, 3 passos) / Tier 2 (padrao, 7 passos) / Tier 3 (complexo, 12+ passos).
-
-### C-026: Trust Tiers (PILOTO)
-Standard (<5 entregas) / Trusted (>=5, nota >=9.0) / Autonomous (>=10, nota >=9.5).
-
-### C-027: Telemetria por Self-Reporting (PILOTO)
-Todo output de agente inclui bloco `_telemetry` com: agent_id, tokens estimados, confidence, etc.
-
-### C-028: Learning Spike (PILOTO)
-Nova ferramenta/processo → explorar em sandbox → codificar em spec update → validar A/B.
+Servidas pelo MCP server "agency". Consultar via `get_doc("DECISIONS")`.
+Nao duplicar aqui — fonte unica em agency/DECISIONS.md.
+Nota: D-006 local (Ponto de Encontro) e distinto de D-006 global (Process Freeze).
 
 ---
 

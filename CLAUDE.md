@@ -29,16 +29,23 @@ Simulacao atomica 2D interativa em Rust/Bevy 0.18 que percorre 9 eras do modelo 
 - Prefere delegacao a agentes em vez de execucao direta
 - Ultima palavra em tudo — nao commitar, contratar ou mudar escopo sem aprovacao
 
-## Framework de Agentes
+## Framework de Agentes (via MCP "agency")
 
-Specs compartilhados em https://github.com/synth1s/agency (clone local: F:/Users/goula/projects/lab/agency/).
-Contexto do projeto em atom-sim/team/context/ (PROJECT.md, DECISIONS.md, CHANGELOG.md).
+Specs e convencoes globais sao acessados via MCP server "agency" (configurado em ~/.claude.json).
 
 ### Para invocar um agente:
-1. Ler spec de agency/specs/[ID].spec.md
-2. Instruir o agente a ler atom-sim/team/context/PROJECT.md e DECISIONS.md
+1. `get_spec("SE-001")` — retorna spec do agente
+2. Ler `team/context/PROJECT.md` e `team/context/DECISIONS.md` (contexto local)
 3. Passar tarefa com criterios de aceite
-4. Apos entrega: atualizar team/context/CHANGELOG.md e registro em agency/projects/atom-sim/
+4. Apos entrega: `record_delivery(...)` para registrar no CSV
+
+### Tools MCP disponiveis:
+- `get_spec(id)` / `list_specs()` — specs de agentes
+- `get_doc(name)` — governance (DECISIONS, DoD, ORGANOGRAMA, etc.)
+- `get_ref(name)` / `list_refs()` — templates e referencias
+- `get_context_profile(task_type)` — perfil de injecao
+- `get_dashboard()` / `get_deliveries()` — metricas
+- `record_delivery(...)` / `record_telemetry(output)` — registrar entregas
 
 ### Time ativo:
 - SE-001 (Eng. Rust, 9.5/10) — implementacao e revisao de codigo
@@ -60,15 +67,9 @@ Contexto do projeto em atom-sim/team/context/ (PROJECT.md, DECISIONS.md, CHANGEL
 - C-006: Constantes CODATA/NIST (desvio < 0.001% em spectral.rs/quantum.rs)
 - C-007: Testes para funcoes publicas de fisica (tolerancias explicitas)
 
-## Convencoes Globais (agency/)
+## Convencoes Globais (via MCP "agency")
 
-- C-008: Testes obrigatorios — feature sem testes = rejeicao automatica
-- C-018: Testes atomicos — testes no MESMO commit que o codigo
-- C-023: Rastreabilidade — commits `[TG-NNN]` (PILOTO)
-- C-024: Security Baseline — OWASP Top 10 (PILOTO)
-- C-025: Workflow Tiers — Tier 1/2/3 por complexidade (PILOTO)
-- C-027: Telemetria — bloco `_telemetry` no output (PILOTO)
-- C-028: Learning Spike — explorar antes de atualizar spec (PILOTO)
+Convencoes globais servidas pelo MCP: `get_doc("DECISIONS")`. Nao duplicar aqui.
 
 ## Padrao de Era (template)
 
