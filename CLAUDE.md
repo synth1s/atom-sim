@@ -50,7 +50,7 @@ Contexto do projeto em atom-sim/team/context/ (PROJECT.md, DECISIONS.md, CHANGEL
 - TL-001 (Tech Lead, 9/10) — decomposicao tecnica
 - GP-001 (Gerente, pendente) — coordenacao de sprints
 
-## Convencoes Tecnicas
+## Convencoes Tecnicas (locais)
 
 - C-001: Texto sem acentos no codigo (ASCII, compatibilidade Bevy)
 - C-002: Handles pre-alocados em XxxParticleAssets Resource (evitar leak)
@@ -59,6 +59,16 @@ Contexto do projeto em atom-sim/team/context/ (PROJECT.md, DECISIONS.md, CHANGEL
 - C-005: UI com Text2d + posicoes absolutas (viewport 1280x720)
 - C-006: Constantes CODATA/NIST (desvio < 0.001% em spectral.rs/quantum.rs)
 - C-007: Testes para funcoes publicas de fisica (tolerancias explicitas)
+
+## Convencoes Globais (agency/)
+
+- C-008: Testes obrigatorios — feature sem testes = rejeicao automatica
+- C-018: Testes atomicos — testes no MESMO commit que o codigo
+- C-023: Rastreabilidade — commits `[TG-NNN]` (PILOTO)
+- C-024: Security Baseline — OWASP Top 10 (PILOTO)
+- C-025: Workflow Tiers — Tier 1/2/3 por complexidade (PILOTO)
+- C-027: Telemetria — bloco `_telemetry` no output (PILOTO)
+- C-028: Learning Spike — explorar antes de atualizar spec (PILOTO)
 
 ## Padrao de Era (template)
 
